@@ -1,19 +1,18 @@
 import io
 import time
 import zipfile
-
 import pandas as pd
+import json
+import common
+import requests
 
-from log import PrintLog
+from common import process_pool
+from common.log import logger
 
-log = PrintLog()
 ob_dl_fiter = True
-def download_herbs_mole_targets_to_zip(value, l):
-    global log
-    if l is not None:
-        log = l
+def download_herbs_mole_targets_to_zip(value):
     herbs = []
-    for line in value['herb_names'].strip().replace('输入中药名称,每行一个或者逗号分隔', '').split('\n'):
+    for line in value['herb_names'].strip().split('\n'):
         if line.strip() == '':
             continue
         for item in line.strip().split(','):
@@ -21,7 +20,7 @@ def download_herbs_mole_targets_to_zip(value, l):
                 continue
             herbs.append(item.strip())
     if len(herbs) == 0:
-        log.error('请输入中药名称！')
+        logger.error('请输入中药名称！')
     global ob_dl_fiter
     ob_dl_fiter = value['ob_dl_filter']
     return batch_query_and_save_herbs(herbs)
@@ -70,15 +69,15 @@ def queryHerbEnName(herb_name):
                 herb_en_name = result["data"][0].get("herb_en_name")
                 return herb_en_name
             else:
-                log.info(f"查询结果无效: {result}")
+                logger.info(f"查询结果无效: {result}")
                 return None
         else:
-            log.error(f"请求失败，状态码：{response.status_code}")
-            log.error(f"响应内容： {response.text}")
+            logger.error(f"请求失败，状态码：{response.status_code}")
+            logger.error(f"响应内容： {response.text}")
             return None
 
     except requests.exceptions.RequestException as e:
-        log.error(f"请求发生异常：{e}")
+        logger.error(f"请求发生异常：{e}")
         return None
 
 
@@ -121,15 +120,14 @@ def query_herb_detail(query_words):
             if result.get("code") == 0:
                 return result
             else:
-                log.info(f"查询结果无效: {result}")
+                logger.info(f"查询结果无效: {result}")
                 return None
         else:
-            log.info(f"请求失败，状态码：{response.status_code}")
-            log.info("响应内容：", response.text)
+            logger.info(f"请求失败，状态码：{response.status_code}")
             return None
 
     except requests.exceptions.RequestException as e:
-        log.info(f"请求发生异常：{e}")
+        logger.info(f"请求发生异常：{e}")
         return None
 
 
@@ -158,8 +156,6 @@ def filter_molecules(molecules_list):
 
 def filter_targets(targets, molecule_names):
     filtered = []
-    log.info(targets)
-    log.info(molecule_names)
     for item in targets:
         if item['molecule_name'] in molecule_names:
             filtered.append(item)
@@ -175,14 +171,14 @@ def save_herb_detail(detail_data, file_name):
         file_name (str): 要保存的Excel文件名(不带扩展名)
     """
     if not detail_data or 'data' not in detail_data:
-        log.error("无效的详细数据，无法保存")
+        logger.error("无效的详细数据，无法保存")
         return False
 
     data = detail_data['data']
 
     # 检查是否有targets和molecules数据
     if 'targets' not in data or 'molecules' not in data:
-        log.warn("详细数据中缺少targets或molecules信息")
+        logger.warn("详细数据中缺少targets或molecules信息")
         return False
 
     try:
@@ -196,7 +192,7 @@ def save_herb_detail(detail_data, file_name):
                     molecules_df = pd.DataFrame(filtered_molecules)
                     molecules_df.to_excel(writer, sheet_name='molecules', index=False)
                 else:
-                    log.warn(f"警告: {file_name}的molecules数据经过滤后无有效记录")
+                    logger.warn(f"警告: {file_name}的molecules数据经过滤后无有效记录")
                     pd.DataFrame().to_excel(writer, sheet_name='molecules', index=False)
 
                 # 处理targets数据
@@ -206,7 +202,7 @@ def save_herb_detail(detail_data, file_name):
                     if filtered_targets:
                         targets_df = pd.DataFrame(filtered_targets)
                         targets_df.to_excel(writer, sheet_name='targets', index=False)
-        log.info(f"数据已成功保存 {file_name}.xlsx")
+        logger.info(f"数据已成功保存 {file_name}.xlsx")
 
         return {
             'value': excel_buffer.getvalue(),
@@ -215,7 +211,7 @@ def save_herb_detail(detail_data, file_name):
         }
 
     except Exception as ee:
-        log.info(f"保存Excel文件时出错: {ee}")
+        logger.info(f"保存Excel文件时出错: {ee}")
         return False
 
 
@@ -241,29 +237,28 @@ def batch_query_and_save_herbs(herb_list):
     zip_io = io.BytesIO()
     zipf = zipfile.ZipFile(zip_io,'w')
     for herb in herb_list:
-        log.info(f"\n正在处理: {herb}")
+        process_pool.log_to_dialog(f"\n正在处理: {herb}")
 
         # 1. 查询英文名称
         en_name =  queryHerbEnName(herb)
         if not en_name:
-            log.info(f"无法获取'{herb}'的英文名称，跳过此药物")
+            logger.info(f"无法获取'{herb}'的英文名称，跳过此药物")
             failed_herbs.append(herb)
             continue
 
-        log.info(f"'{herb}'的英文名称是: {en_name}")
+        logger.info(f"'{herb}'的英文名称是: {en_name}")
 
         # 2. 查询详细信息
         detail = query_herb_detail(en_name)
         if not detail:
-            log.warn(f"无法获取'{en_name}'的详细信息，跳过此药物")
+            process_pool.log_to_dialog(f"无法获取'{en_name}'的详细信息，跳过此药物")
             failed_herbs.append(herb)
             continue
 
         # 3. 保存到Excel
-        log.info(detail)
         item = save_herb_detail(detail, herb)
         if not item:
-            log.error(f"保存'{herb}'的详细信息到Excel失败")
+            logger.error(f"保存'{herb}'的详细信息到Excel失败")
             failed_herbs.append(herb)
             continue
         zipf.writestr(item['file_name'], item['value'])
@@ -273,11 +268,11 @@ def batch_query_and_save_herbs(herb_list):
 
     # 打印处理失败的药物列表
     if failed_herbs:
-        log.error("\n以下药物处理失败:")
+        logger.error("\n以下药物处理失败:")
         for failed_herb in failed_herbs:
-            log.error(f"- {failed_herb}")
+            logger.error(f"- {failed_herb}")
     else:
-        log.success("\n所有药物处理成功!")
+        logger.info("\n所有药物处理成功!")
     zipf.close()
     return zip_io.getvalue(), 'excels.zip'
 
@@ -290,13 +285,13 @@ if __name__ == "__main__":
         import requests
         import json
     except ImportError as e:
-        log.info(f"缺少必要的Python库: {e}")
-        log.info("请先安装: pip install requests pandas openpyxl")
+        logger.info(f"缺少必要的Python库: {e}")
+        logger.info("请先安装: pip install requests pandas openpyxl")
         exit(1)
 
-    log.info("开始批量查询中药信息...")
+    logger.info("开始批量查询中药信息...")
     batch_query_and_save_herbs(herb_list)
-    log.info("\n所有药物处理完成!")
+    logger.info("\n所有药物处理完成!")
 
 # 以下药物处理失败:
 # - 补骨脂

@@ -1,11 +1,14 @@
+import datetime
+import queue
 import random
-import traceback
+import threading
 
 from nicegui import ui
 
 from category import CATEGORIES
+from common import log
+from common.log import logger
 from header import with_header
-from log import LeveledLog, on_connect, on_disconnect
 
 
 def create_page(categories, path):
@@ -31,10 +34,10 @@ def init():
             new_path = base_path.rstrip('/') + category['path']
             if 'categories' in category:
                 # 递归创建子页面，传入新路径作为基础路径
-                print(f'Adding category "{new_path}"')
+                logger.info(f'Adding category "{new_path}"')
                 create_pages(category['categories'], new_path)
             elif 'creator' in category:
-                print(f'Adding creator "{new_path}"')
+                logger.info(f'Adding creator "{new_path}"')
                 create_feature(category, new_path)
 
     # 从根路径开始
@@ -79,10 +82,21 @@ def create_categories(categories,path):
 @ui.page('/log')
 @with_header(title='log')
 def log_page():
-    with ui.scroll_area().style('height:100vh') as scroll:
-        log = LeveledLog(max_lines=10000).classes('w-full h-full')
-        scroll.client.on_connect(lambda : on_connect(scroll.client, log))
-        scroll.client.on_disconnect(lambda : on_disconnect(scroll.client))
-    ui.timer(0.1,lambda :scroll.scroll_to(percent=100))
+    ui.link('log','/logs/app.log')
+    log_view = ui.log(max_lines=1000).style('height:90vh')
+    def append(txt):
+        if '| WARNING |' in txt:
+            log_view.push(txt,classes='text-orange')
+        elif '| ERROR |' in txt:
+            log_view.push(txt,classes='text-red')
+        else:
+            log_view.push(txt)
+    def handler(txt):
+        append(txt)
+    logs = log.full_log()
+    for l in logs:
+        append(l)
+    log.on_new_log(handler)
+
 
 

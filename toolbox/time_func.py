@@ -2,7 +2,8 @@ from datetime import datetime
 
 from dateutil import parser
 from nicegui import binding
-import log
+from common import log
+
 
 class TimeModel:
     timestamp = binding.BindableProperty()

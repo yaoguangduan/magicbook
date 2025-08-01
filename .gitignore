@@ -8,3 +8,4 @@ wheels/
 .nicegui
 # Virtual environments
 .venv
+logs

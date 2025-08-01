@@ -1,41 +1,48 @@
 import functools
 
-from nicegui import ui, run
+from nicegui import ui, run, app
 
 from bioinformatics.split_targets import split_molecule_targets
 from bioinformatics.tcmsp import download_herbs_mole_targets_to_zip
+from common import process_pool
 from common.download import download
+from common.process_pool import ProcessResult
 from common.util import ui_creator
-from log import QueuedLog, LeveledLog
-
-tcmsp_data = {
-    'ob_dl_filter': True,
-    'herb_names': ''
-}
 
 @ui_creator
 def split_molecule_targets_ui():
     with ui.column().classes('w-full') as ele:
-        log = QueuedLog(max_lines=1000).classes('h-full w-full')
-        ui.upload(label="上传excel", auto_upload=True, multiple=False, on_upload=lambda v: split_molecule_targets(v, log))
-        log.move(ele)
+        ui.upload(label="上传excel", auto_upload=True, multiple=False, on_upload=lambda v: split_molecule_targets(v))
 
 @ui_creator
 def tcmsp_download_herbs_mole_target_ui():
-    log = LeveledLog(max_lines=1000).classes('h-full w-full')
-    with ui.column().classes('w-full') as elem:
+    if 'tcmsp_data' not in app.storage.user:
+        app.storage.user['tcmsp_data'] = {
+            'ob_dl_filter': True,
+            'herb_names': ''
+        }
+
+    with ui.column().classes('w-full'):
         with ui.row():
+            ui.checkbox(text='过滤(ob>=30;dl>=0.18)').bind_value(app.storage.user['tcmsp_data'],'ob_dl_filter')
             spin = ui.spinner(size='lg')
             spin.set_visibility(False)
-            ui.checkbox(text='过滤(ob>=30;dl>=0.18)',on_change=lambda v:tcmsp_data.update({'ob_dl_filter':v.value}))
-            ui.button(text='下载', on_click=functools.partial(tcmsp_download,spin,log))
-        ui.codemirror(value='输入中药名称,每行一个或者逗号分隔',theme='githubLight',on_change=lambda v :tcmsp_data.update({'herb_names':v.value}))
-        log.move(elem)
+            btn = ui.button(text='下载')
+            btn.on_click(functools.partial(tcmsp_download,dict(app.storage.user['tcmsp_data']),spin,btn))
+        ui.label('请在下方输入中药名称,每行一个或者逗号分隔:')
+        ui.codemirror(theme='githubLight').bind_value(app.storage.user['tcmsp_data'],'herb_names')
 
-
-async def tcmsp_download(spin,log):
-    log.clear()
+def tcmsp_download(tcmsp_data,spin,btn):
     spin.set_visibility(True)
-    resp = await run.io_bound(download_herbs_mole_targets_to_zip, tcmsp_data, log)
-    download(resp[0],filename=resp[1],media_type='application/zip')
+    btn.set_visibility(False)
+    def cb(pr:ProcessResult):
+        if pr.e is not None:
+            ui.notify(f"{type(pr.e).__name__}: {str(pr.e)}", type="negative", position="top", timeout=3000)
+        else:
+            with pr.slot:
+                resp = pr.data
+                download(resp[0],filename=resp[1],media_type='application/zip')
+
+    process_pool.run_with_callback(functools.partial(download_herbs_mole_targets_to_zip, tcmsp_data), cb=cb)
     spin.set_visibility(False)
+    btn.set_visibility(True)

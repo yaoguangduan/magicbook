@@ -58,7 +58,7 @@ async def do_request(model,log:nicegui.elements.log.Log):
         model['invoke_time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         model['resp_size'] = f'{(len(rsp.content)/1000):.3f} KB'
     except Exception as e:
-        print(e)
+        logger.info(e)
         model['error'] = f"{type(e).__name__}: {str(e)}"
     finally:
         model['invoke_time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')

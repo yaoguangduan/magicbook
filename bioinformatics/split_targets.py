@@ -6,12 +6,12 @@ from nicegui import ui
 import pandas as pd
 
 from common.download import download
-from log import PrintLog
+from common.log import logger
 
 
-def split_molecule_targets(v,l = PrintLog()):
+def split_molecule_targets(v):
     try:
-        l.info(v)
+        logger.info(v)
         wb = openpyxl.load_workbook(io.BytesIO(v.content.read()), read_only=True)
         # 获取所有sheet名
         sheet_names = wb.sheetnames
@@ -36,9 +36,9 @@ def split_molecule_targets(v,l = PrintLog()):
                 df = pd.DataFrame(data)
                 df.to_excel(writer, sheet_name=name, index=False)
         download(buf.getvalue(), filename=f"{v.name}_split.xlsx",media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        l.success("下载成功")
+        logger.success("下载成功")
     except Exception as e:
-        l.error(f"发生异常：{e}")
+        logger.error(f"发生异常：{e}")
     finally:
         ui.timer(15.0, lambda: os.unlink(f"{v.name}_split.xlsx") if os.path.exists(f"{v.name}_split.xlsx") else None, once=True)
 

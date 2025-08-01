@@ -424,7 +424,7 @@ def test_detect_format():
         ('private String name; public void setName(String name) { }', 'Java'),
 
         # Python
-        ('def test(): print("Hello")\nif __name__ == "__main__": test()', 'Python'),
+        ('def test(): logger.info("Hello")\nif __name__ == "__main__": test()', 'Python'),
         ('class Test:\n    def __init__(self):\n        self.name = "test"', 'Python'),
 
         # Rust
@@ -442,9 +442,9 @@ def test_detect_format():
     for content, expected in test_cases:
         result = detect_format(content)
         status = "✓" if result == expected else "✗"
-        print(f"{status} {expected:15} | {content[:50]}...")
+        logger.info(f"{status} {expected:15} | {content[:50]}...")
         if result != expected:
-            print(f"    Expected: {expected}, Got: {result}")
+            logger.info(f"    Expected: {expected}, Got: {result}")
 
 
 if __name__ == "__main__":
@@ -470,4 +470,4 @@ if __name__ == "__main__":
   }
 }
 '''
-    print(detect_format(s))
+    logger.info(detect_format(s))

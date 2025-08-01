@@ -1,11 +1,15 @@
 import asyncio
 import io
+import json
 import traceback
 import zipfile
 
 import pymupdf
 
 from nicegui import ui
+
+from common import process_pool
+from common.log import logger
 
 
 def after_uploaded(uploads,pdf_list,updater):
@@ -24,7 +28,6 @@ def after_uploaded(uploads,pdf_list,updater):
         content.close()
         doc.close()
 
-    uploads.sender.clear()
     updater()
 
 def merge_checked_with_page_no(pdf_list,model):
@@ -38,10 +41,11 @@ def merge_checked_with_page_no(pdf_list,model):
         doc.close()
         return pdf_bytes, 'merged.pdf', 'application/pdf'
     except Exception as e:
-        print(e)
+        logger.info(e)
         return f"{type(e).__name__}: {str(e)}"
 
 def merge_all(pdf_list,model):
+
     try:
         doc = pymupdf.open()
         for page in pdf_list:
@@ -51,7 +55,7 @@ def merge_all(pdf_list,model):
         doc.close()
         return pdf_bytes, 'merged.pdf', 'application/pdf'
     except Exception as e:
-        print(e)
+        logger.info(e)
         return f"{type(e).__name__}: {str(e)}"
 
 def encrypt_pdf(pdf_list,model):
@@ -83,7 +87,7 @@ def encrypt_pdf(pdf_list,model):
         return zip_io.getvalue(), "protected.zip", 'application/zip'
     except Exception as e:
         traceback.print_exc()
-        print(e)
+        logger.info(e)
         return f"{type(e).__name__}: {str(e)}"
 
 def decrypt_pdf(pdf_list,model):
@@ -109,18 +113,19 @@ def decrypt_pdf(pdf_list,model):
 
 def convert_checked_to_png(pdf_list, dpi):
     try:
-        print(dpi)
+        logger.info(dpi)
         zip_io = io.BytesIO()
         zipf = zipfile.ZipFile(zip_io, 'w')
-        for page in pdf_list:
-            if not page['check']:
+        for pdf in pdf_list:
+            if not pdf['check']:
                 continue
-            doc = pymupdf.open(stream=io.BytesIO(page['bytes']))
-            name = page['name'].rstrip(".pdf")
+            doc = pymupdf.open(stream=io.BytesIO(pdf['bytes']))
+            name = pdf['name'].rstrip(".pdf")
             zipf.mkdir(name)
-            pagen_from = int(page['page_from'])
-            pagen_to = int(page['page_to'])
+            pagen_from = int(pdf['page_from'])
+            pagen_to = int(pdf['page_to'])
             for page_num in range(pagen_from-1, pagen_to):
+                process_pool.log_to_dialog(f'convert to png {name}/{page_num}')
                 page = doc.load_page(page_num)
                 mat = pymupdf.Matrix(dpi / 72, dpi / 72)
                 pix = page.get_pixmap(matrix=mat)
@@ -128,7 +133,7 @@ def convert_checked_to_png(pdf_list, dpi):
         zipf.close()
         return zip_io.getvalue(), "pdfs_to_pngs.zip", 'application/zip'
     except Exception as e:
-        print(e)
+        logger.info(e)
         return f"{type(e).__name__}: {str(e)}"
 def compress_pdf(pdf_list, model,idx) :
     try:
@@ -148,7 +153,7 @@ def compress_pdf(pdf_list, model,idx) :
         ui.download.content(content=pdf_bytes,filename=f'{str(pdf_list[idx]["name"]).rstrip(".pdf")}-compressed.pdf',media_type='application/pdf')
     except Exception as e:
         traceback.print_exc()
-        print(e)
+        logger.info(e)
         model['error'] = f"{type(e).__name__}: {str(e)}"
 def hex_to_rgb_normalized(hex_color):
     """转换为0-1范围的RGB"""
@@ -160,7 +165,7 @@ def hex_to_rgb_normalized(hex_color):
 
 def add_watermark(pdf_list, model):
     try:
-        print(model)
+        logger.info(model)
         zip_io = io.BytesIO()
         zipf = zipfile.ZipFile(zip_io, 'w')
         for pdf in pdf_list:

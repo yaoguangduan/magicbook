@@ -15,7 +15,7 @@ settings = {
 
 # 初始化mcp服务
 mcp = FastMCP("hello-mcp-server", log_level="DEBUG", **settings,debug=True)
-print(mcp.settings)
+logger.info(mcp.settings)
 fastmcp.settings.log_level = "DEBUG"
 fastmcp.settings.host = "0.0.0.0"
 mcp.settings.host = "0.0.0.0"

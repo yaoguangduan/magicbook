@@ -1,5 +1,9 @@
 import bioinformatics
 import toolbox
+import toolbox.convert_view
+import toolbox.endecode_view
+import toolbox.http_view
+import toolbox.pdf_view
 
 CATEGORIES = [
 {
@@ -23,13 +27,13 @@ CATEGORIES = [
             'path':'/endecode',
             'name':'编解码',
             'desc':'base64/url/jwt编码/解码',
-            'creator':toolbox.encode_decode_ui
+            'creator': toolbox.encode_decode_ui
         },
         {
             'path':'/convert',
             'name':'格式转换',
             'desc':'json/yaml/xml转换',
-            'creator':toolbox.converter_ui
+            'creator': toolbox.converter_ui
         },
         {
             'path': '/http_req',

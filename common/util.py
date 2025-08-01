@@ -9,7 +9,7 @@ def ui_creator(func):
 
 def copy_to_clipboard(txt,notify=False):
     try:
-        print(txt)
+        logger.info(txt)
         # 使用document.execCommand，兼容所有环境
         js_code = f'''
         const text = `{txt}`;

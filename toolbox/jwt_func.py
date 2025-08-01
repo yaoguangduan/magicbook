@@ -8,14 +8,16 @@ import base64
 import json
 import jwt
 
+from common.log import logger
+
 algos = ['HS256', 'HS384', 'HS512', 'RS256', 'RS384', 'RS512', 'ES256', 'ES256K', 'ES384', 'ES512', 'PS256', 'PS384', 'PS512', 'EdDSA']
 
 
 def decode_with_signature_extraction(token, algorithm):
     """解码并提取signature信息"""
-    print(f"\n=== {algorithm} Signature 提取 ===")
+    logger.info(f"\n=== {algorithm} Signature 提取 ===")
     parts = token.split('.')
-    print(parts)
+    logger.info(parts)
     if len(parts) != 3:
         raise Exception('无效的JWT格式!')
 
@@ -31,9 +33,9 @@ def decode_with_signature_extraction(token, algorithm):
     payload_bytes = base64.urlsafe_b64decode(payload_b64 + payload_padding)
     payload = json.loads(payload_bytes.decode('utf-8'))
 
-    print(f"Header: {header}")
-    print(f"Payload: {payload}")
-    print(f"Signature (base64): {signature_b64}")
+    logger.info(f"Header: {header}")
+    logger.info(f"Payload: {payload}")
+    logger.info(f"Signature (base64): {signature_b64}")
     return {
         'header': header,
         'payload': payload
@@ -48,7 +50,7 @@ def jwt_decode(jwt_model):
         if 'alg' in decoded['header'] and decoded['header']['alg']  in algos:
             jwt_model['algo'] = decoded['header']['alg']
     except Exception as e:
-        print(e)
+        logger.info(e)
         jwt_model['error'] = f"{type(e).__name__}: {str(e)}"
 def jwt_encode(jwt_model):
     try:
@@ -68,6 +70,6 @@ def jwt_verify(jwt_model):
             jwt.decode(jwt_model['encoded'], key=jwt_model['signature'], algorithms=[jwt_model['algo']],verify=True)
         else:
             ret = jwt.decode(jwt_model['encoded'], key=jwt_model['pub'], algorithms=[jwt_model['algo']],verify=True)
-            print(ret)
+            logger.info(ret)
     except Exception as e:
         jwt_model['error'] = f"{type(e).__name__}: {str(e)}"
