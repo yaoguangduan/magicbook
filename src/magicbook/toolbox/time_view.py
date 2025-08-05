@@ -1,7 +1,7 @@
 from nicegui import ui
 
-from common.util import ui_creator, copy_to_clipboard
-from toolbox import TimeModel, convert_timestamp_to_formatted, convert_time_str_to_stamp
+from magicbook.common.util import ui_creator, copy_to_clipboard
+from magicbook.toolbox import TimeModel, convert_timestamp_to_formatted, convert_time_str_to_stamp
 
 
 @ui_creator

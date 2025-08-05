@@ -1,7 +1,7 @@
 from nicegui import app, ui
 
-from common.util import ui_creator, copy_to_clipboard
-from toolbox import encode_content, decode_content, download_content, encode_file_content, decode_file_content, decode_url, encode_url, algos, jwt_decode, jwt_encode, jwt_verify
+from magicbook.common.util import ui_creator, copy_to_clipboard
+from magicbook.toolbox import encode_content, decode_content, download_content, encode_file_content, decode_file_content, decode_url, encode_url, algos, jwt_decode, jwt_encode, jwt_verify
 
 
 def change_visible(v, sigs, pps):

@@ -8,7 +8,7 @@ import base64
 import json
 import jwt
 
-from common.log import logger
+from magicbook.common.log import logger
 
 algos = ['HS256', 'HS384', 'HS512', 'RS256', 'RS384', 'RS512', 'ES256', 'ES256K', 'ES384', 'ES512', 'PS256', 'PS384', 'PS512', 'EdDSA']
 

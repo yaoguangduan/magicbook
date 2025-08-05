@@ -2,12 +2,9 @@ import io
 import time
 import zipfile
 import pandas as pd
-import json
-import common
-import requests
 
-from common import process_pool
-from common.log import logger
+from magicbook.common import process_pool
+from magicbook.common.log import logger
 
 ob_dl_fiter = True
 def download_herbs_mole_targets_to_zip(value):

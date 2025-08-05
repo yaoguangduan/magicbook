@@ -1,9 +1,7 @@
 import base64
 
-from nicegui import ui
-
-from common.download import download
-from common.util import binary_to_bytes_display, bytes_display_to_binary, short_uuid
+from magicbook.common.download import download
+from magicbook.common.util import binary_to_bytes_display, bytes_display_to_binary, short_uuid
 
 
 class Base64Utils:

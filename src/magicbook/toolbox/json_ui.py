@@ -1,6 +1,6 @@
 from nicegui import ui
 
-from common.util import ui_creator
+from magicbook.common.util import ui_creator
 
 
 @ui_creator

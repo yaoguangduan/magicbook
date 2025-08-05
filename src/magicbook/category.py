@@ -1,9 +1,5 @@
-import bioinformatics
-import toolbox
-import toolbox.convert_view
-import toolbox.endecode_view
-import toolbox.http_view
-import toolbox.pdf_view
+from magicbook import bioinformatics
+from magicbook import toolbox
 
 CATEGORIES = [
 {
@@ -15,13 +11,13 @@ CATEGORIES = [
             'path':'/json',
             'name':'JSON',
             'desc':'json格式化、压缩、编辑、校验和他她武器去维权',
-            'creator':toolbox.json_ui
+            'creator': toolbox.json_ui
         },
         {
             'path':'/time',
             'name':'时间处理',
             'desc':'时间转换、处理、格式化',
-            'creator':toolbox.time_ui
+            'creator': toolbox.time_ui
         },
         {
             'path':'/endecode',
@@ -57,12 +53,12 @@ CATEGORIES = [
             'path':'/tcmsp_herbs_download',
             'name':'TCMSP下载药物成分靶点',
             'desc':'输入药物名称，下载药物对应的成分和靶点，带过滤',
-            'creator':bioinformatics.tcmsp_download_herbs_mole_target_ui
+            'creator': bioinformatics.tcmsp_download_herbs_mole_target_ui
         },{
             'path':'/molecule_targets_split',
             'name':'分割成分的targets',
             'desc':'上传excel，将1:n的成分靶点列表转换成1:1的excel',
-            'creator':bioinformatics.split_molecule_targets_ui
+            'creator': bioinformatics.split_molecule_targets_ui
         }
     ]
 }]

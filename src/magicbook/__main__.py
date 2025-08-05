@@ -1,15 +1,22 @@
+#!/usr/bin/env python3
+"""
+MagicBook 主入口点
+当使用 python -m magicbook 或 uv run mbook 时调用
+"""
+
 import logging
 import os
 import sys
 
 import nicegui.logging
 
-from common import pages, process_pool
+from magicbook.common import pages, process_pool
 from nicegui import ui
 
-from common.log import logger
+from magicbook.common.log import logger
 
-if __name__ in {"__main__","__mp_main__"}:
+def main():
+    """主函数入口点"""
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     sys.path.insert(0, project_root)
     logger.info(f"模块被导入: {__name__}")
@@ -17,10 +24,13 @@ if __name__ in {"__main__","__mp_main__"}:
     pages.init()
     process_pool.init()
     nicegui.app.add_static_files("/logs","./logs")
+
+if __name__ == "__main__":
+    main()
     ui.run(host='0.0.0.0',
            port=8080,
            show=False,
            storage_secret='-',
            ssl_keyfile='./cert/key.pem',
            ssl_certfile='./cert/cert.pem',
-           uvicorn_reload_excludes='logs,.venv,cert,.nicegui')
+           uvicorn_reload_excludes='logs,.venv,cert,.nicegui') 

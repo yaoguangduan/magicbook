@@ -1,13 +1,13 @@
 import functools
 
-from nicegui import ui, run, app
+from nicegui import ui, app
 
-from bioinformatics.split_targets import split_molecule_targets
-from bioinformatics.tcmsp import download_herbs_mole_targets_to_zip
-from common import process_pool
-from common.download import download
-from common.process_pool import ProcessResult
-from common.util import ui_creator
+from magicbook.bioinformatics.split_targets import split_molecule_targets
+from magicbook.bioinformatics.tcmsp import download_herbs_mole_targets_to_zip
+from magicbook.common import process_pool
+from magicbook.common.download import download
+from magicbook.common.process_pool import ProcessResult
+from magicbook.common.util import ui_creator
 
 @ui_creator
 def split_molecule_targets_ui():

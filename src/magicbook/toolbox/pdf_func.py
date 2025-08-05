@@ -1,6 +1,4 @@
-import asyncio
 import io
-import json
 import traceback
 import zipfile
 
@@ -8,8 +6,8 @@ import pymupdf
 
 from nicegui import ui
 
-from common import process_pool
-from common.log import logger
+from magicbook.common import process_pool
+from magicbook.common.log import logger
 
 
 def after_uploaded(uploads,pdf_list,updater):

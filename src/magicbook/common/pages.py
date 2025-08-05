@@ -1,9 +1,11 @@
 import random
+
 from nicegui import ui
 
-from category import CATEGORIES
-from header import with_header
-from log import LeveledLog, on_connect, on_disconnect
+from magicbook.category import CATEGORIES
+from magicbook.common import log
+from magicbook.common.log import logger
+from magicbook.header import with_header
 
 
 def create_page(categories, path):
@@ -29,10 +31,10 @@ def init():
             new_path = base_path.rstrip('/') + category['path']
             if 'categories' in category:
                 # 递归创建子页面，传入新路径作为基础路径
-                print(f'Adding category "{new_path}"')
+                logger.info(f'Adding category "{new_path}"')
                 create_pages(category['categories'], new_path)
             elif 'creator' in category:
-                print(f'Adding creator "{new_path}"')
+                logger.info(f'Adding creator "{new_path}"')
                 create_feature(category, new_path)
 
     # 从根路径开始
@@ -57,13 +59,11 @@ ICONS = ['star','sync','tab','tabs','key','forest','rocket','cookie','hive','ext
 
 
 def create_category_card(category,path):
-    print('cccccc',category,path)
     with ui.link(target=path.rstrip('/') + category['path']).classes('w-64 no-underline'):
         with ui.card().classes('w-full cursor-pointer hover:shadow-lg transition-shadow flex justify-center items-center'): # 添加flex和居中类
             with ui.column().classes('w-full p-4 items-center text-center gap-2'): # 添加w-full, text-center和gap-2
                 color = random.choice(CLASSIC_COLORS)
                 icon = category['icon'] if 'icon' in category else random.choice(ICONS)
-                print(category['name'],icon)
                 ui.icon(icon, size='32px').classes(f'{color}')
                 ui.label(category['name']).classes('text-lg font-bold')  # 移除mt-2因为已经用gap控制间距
                 ui.label(category['desc']).classes('text-gray-500 text-sm  overflow-hidden text-ellipsis')
@@ -79,10 +79,21 @@ def create_categories(categories,path):
 @ui.page('/log')
 @with_header(title='log')
 def log_page():
-    with ui.scroll_area().style('height:100vh') as scroll:
-        log = LeveledLog(max_lines=10000).classes('w-full h-full')
-        scroll.client.on_connect(lambda : on_connect(scroll.client, log))
-        scroll.client.on_disconnect(lambda : on_disconnect(scroll.client))
-    ui.timer(0.1,lambda :scroll.scroll_to(percent=100))
+    ui.link('log','/logs/app.log')
+    log_view = ui.log(max_lines=1000).style('height:90vh')
+    def append(txt):
+        if '| WARNING |' in txt:
+            log_view.push(txt,classes='text-orange')
+        elif '| ERROR |' in txt:
+            log_view.push(txt,classes='text-red')
+        else:
+            log_view.push(txt)
+    def handler(txt):
+        append(txt)
+    logs = log.full_log()
+    for l in logs:
+        append(l)
+    log.on_new_log(handler)
+
 
 

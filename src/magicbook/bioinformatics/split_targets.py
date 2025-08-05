@@ -5,8 +5,8 @@ import openpyxl
 from nicegui import ui
 import pandas as pd
 
-from common.download import download
-from common.log import logger
+from magicbook.common import download
+from magicbook.common.log import logger
 
 
 def split_molecule_targets(v):
@@ -35,7 +35,7 @@ def split_molecule_targets(v):
                             })
                 df = pd.DataFrame(data)
                 df.to_excel(writer, sheet_name=name, index=False)
-        download(buf.getvalue(), filename=f"{v.name}_split.xlsx",media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        download.download(buf.getvalue(), filename=f"{v.name}_split.xlsx",media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         logger.success("下载成功")
     except Exception as e:
         logger.error(f"发生异常：{e}")

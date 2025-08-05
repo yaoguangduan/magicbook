@@ -9,9 +9,9 @@ from typing import Callable, Any, NamedTuple, Union
 
 from nicegui import ui, nicegui, context
 
-from common.log import logger
+from magicbook.common.log import logger
 
-progress_queue = multiprocessing.Queue()
+progress_queue = multiprocessing.Queue(maxsize=3000)
 
 def init_worker(queue):
     """进程池初始化函数 - 只运行一次"""
@@ -49,7 +49,7 @@ def log_to_dialog(txt:str|float) -> None:
     tid = os.environ['id'] if 'id' in os.environ else ""
     logger.info(f"dialog {tid} {txt}")
     try:
-        progress_queue.put({
+        progress_queue.put_nowait({
             'id':tid,
             'msg':txt,
         })

@@ -1,12 +1,12 @@
 import functools
 
-from nicegui import ui, run
+from nicegui import ui
 
-from common import process_pool
-from common.download import download
+from magicbook.common import process_pool
+from magicbook.common.download import download
 
-from common.util import ui_creator
-from toolbox import after_uploaded, encrypt_pdf, decrypt_pdf, add_watermark, merge_checked_with_page_no, merge_all, convert_checked_to_png
+from magicbook.common.util import ui_creator
+from magicbook.toolbox import after_uploaded, encrypt_pdf, decrypt_pdf, add_watermark, merge_checked_with_page_no, merge_all, convert_checked_to_png
 
 
 def up_index(pdf_list, idx):

@@ -1,9 +1,9 @@
 from nicegui import app, ui
 from nicegui.events import ValueChangeEventArguments
 
-from common.txt_type_detect import detect_format
-from common.util import ui_creator
-from toolbox import do_convert
+from magicbook.common.txt_type_detect import detect_format
+from magicbook.common.util import ui_creator
+from magicbook.toolbox import do_convert
 
 def detect_lang(src: ValueChangeEventArguments):
     fmt = detect_format(src.value)

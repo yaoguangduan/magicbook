@@ -2,7 +2,7 @@ from datetime import datetime
 
 from dateutil import parser
 from nicegui import binding
-from common import log
+from magicbook.common import log
 
 
 class TimeModel:

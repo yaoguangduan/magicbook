@@ -1,8 +1,8 @@
 from functools import wraps
 
-from nicegui import __version__, background_tasks, events, ui
+from nicegui import background_tasks, events, ui
 
-from category import CATEGORIES
+from magicbook.category import CATEGORIES
 
 bind = False
 
