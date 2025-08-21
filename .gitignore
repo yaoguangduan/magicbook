@@ -1,0 +1,5 @@
+.mb
+backend/.mb
+backend/static
+node_modules
+backend/static

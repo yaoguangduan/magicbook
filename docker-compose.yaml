@@ -1,0 +1,27 @@
+services:
+  app:
+    image: magicbook_base:latest
+    working_dir: /app
+    ports:
+      - "3000:3000"
+      - "5173:5173"
+    volumes:
+      - .:/app
+    environment:
+      - NODE_ENV=development
+      - BUN_ENV=development
+      # 设置 Bun 镜像源
+      - BUN_INSTALL_REGISTRY=https://registry.npmmirror.com
+      - BUN_INSTALL_GLOBAL_CACHE=/app/.bun/install/global
+      - BUN_INSTALL_CACHE=/app/.bun/install/cache
+    command: >
+      sh -c "echo 'begin' && rm -rf yarn.lock && rm -rf node_modules && bun pm cache rm  && yarn install --verbose &&
+             # 启动开发服务器
+             bun run dev"
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
