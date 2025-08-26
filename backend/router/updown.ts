@@ -23,6 +23,8 @@ export const download = async (c: Context) => {
     return c.body(file.stream())
 }
 export const upload = async (c: Context) => {
+    const payload = await c.get('jwtPayload')
+    console.log(payload)
     const {file} = await c.req.parseBody<{ file: File }>()
     if (!file) {
         throw new Error(`bad request`)

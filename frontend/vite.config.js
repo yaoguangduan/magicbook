@@ -6,6 +6,9 @@ export default defineConfig({
     esbuild: {
         target: 'esnext',
     },
+    define: {
+        global: 'globalThis',
+    },
     build: {
         include: ['src/**/*.vue', 'src/**/*.ts'],
         module: "esnext",

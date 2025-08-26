@@ -1,19 +1,18 @@
-import {XMLBuilder, XMLParser, XMLValidator} from 'fast-xml-parser'
+import {XMLBuilder, XMLParser} from 'fast-xml-parser'
 import {parse, stringify} from "yaml";
-import * as TOML from '@iarna/toml'
 import * as PROPERTIES from 'dot-properties'
 
-import {parseINI, stringifyINI,} from "confbox";
+import {parseINI, parseTOML, stringifyINI, stringifyTOML} from "confbox";
 
 const FORMAT = {
-    JSON: Symbol('json'),
-    XML: Symbol('xml'),
-    TOML: Symbol('toml'),
-    INI: Symbol('ini'),
-    PROPERTIES: Symbol('properties'),
-    YAML: Symbol('yaml'),
-    TEXT: Symbol('text')
-};
+    JSON: 'json',
+    XML: 'xml',
+    TOML: 'toml',
+    PROPERTIES: 'properties',
+    YAML: 'yaml',
+    TEXT: 'text'
+} as const;
+
 const xmlParser = new XMLParser({
     ignoreDeclaration: true,
 });
@@ -29,6 +28,14 @@ const XML = {
     },
     stringify: (obj: any): string => {
         return xmlBuilder.build(obj)
+    }
+}
+const TOML = {
+    parse: (toml: string): any => {
+        return parseTOML(toml)
+    },
+    stringify: (obj: any): string => {
+        return stringifyTOML(obj)
     }
 }
 const YAML = {
@@ -47,16 +54,14 @@ const INI = {
         return stringifyINI(obj)
     }
 }
-const detect = (str: string): symbol => {
+const detect = (str: string): string => {
     if (str === null || str === undefined || str.trim() === '') {
         return FORMAT.TEXT
     }
     str = str.trim()
-    try {
-        if (XMLValidator.validate(str)) {
-            return FORMAT.XML
-        }
-    } catch (e) {
+
+    if (str.startsWith('<') && str.endsWith('>')) {
+        return FORMAT.XML
     }
     if (str.startsWith('{') && str.endsWith('}') || str.startsWith('[') && str.endsWith(']')) {
         return FORMAT.JSON
@@ -78,10 +83,13 @@ const detect = (str: string): symbol => {
     }
     return FORMAT.TEXT
 }
-const detectAndConvert = (str: string, to: symbol): any => {
+const detectAndConvert = (str: string, to: string): string => {
     return convert(str, detect(str), to)
 }
-const convert = (str: string, from: symbol, to: symbol): any => {
+const convert = (str: string, from: string, to: string): string => {
+    if (to === FORMAT.TEXT) {
+        return str
+    }
     const mid = [from].map(f => {
         switch (f) {
             case FORMAT.XML:
@@ -90,8 +98,6 @@ const convert = (str: string, from: symbol, to: symbol): any => {
                 return YAML.parse(str)
             case FORMAT.TOML:
                 return TOML.parse(str)
-            case FORMAT.INI:
-                return INI.parse(str)
             case FORMAT.PROPERTIES:
                 return PROPERTIES.parse(str)
             case FORMAT.TEXT:
@@ -111,15 +117,13 @@ const convert = (str: string, from: symbol, to: symbol): any => {
                 return YAML.stringify(mid[0])
             case FORMAT.TOML:
                 return TOML.stringify(mid[0])
-            case FORMAT.INI:
-                return INI.stringify(mid[0])
             case FORMAT.PROPERTIES:
                 return PROPERTIES.stringify(mid[0])
             case FORMAT.TEXT:
-                return mid[0]
+                return mid[0].toString()
             case FORMAT.JSON:
                 return JSON.stringify(mid[0], null, 2)
         }
-    })
+    })[0]
 }
 export {XML, YAML, TOML, INI, PROPERTIES, FORMAT, detect, detectAndConvert, convert}

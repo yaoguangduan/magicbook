@@ -1,5 +1,6 @@
 import * as Bun from 'bun'
-export const f = async (data:any)=>{
+
+export const f = async (data: any) => {
 
 }
 if (Bun.isMainThread) {
@@ -7,7 +8,7 @@ if (Bun.isMainThread) {
     const ret = await f(data)
     console.log(ret)
 } else {
-    try{
+    try {
         self.onmessage = async (msg: MessageEvent) => {
             if (msg.data.type == 'begin') {
                 const ret = await f(msg.data.data)
@@ -17,7 +18,7 @@ if (Bun.isMainThread) {
                 })
             }
         }
-    } catch (e){
+    } catch (e) {
         self.postMessage({
             type: "exit",
             data: e.message

@@ -1,8 +1,13 @@
-import {JSONFilePreset} from 'lowdb/node'
-import {WORK_DIR} from "./dir";
+import {RedisClient} from "bun";
 
-// Read or create db.json
-const defaultData = {uploads: [], downloads: []}
-const db = await JSONFilePreset(WORK_DIR + '/db.json', defaultData)
-
-export default db
+const redis = new RedisClient(process.env.REDIS_URL || 'redis://:dtdyq@114.55.118.115:6379', {
+    connectionTimeout: 3000,
+    autoReconnect: true,
+    maxRetries: 3,
+});
+await redis.connect()
+const root = await redis.hgetall('user:root')
+if (root === null || Object.keys(root).length === 0) {
+    await redis.hmset('user:root', ['username', 'root', 'password', 'root'])
+}
+export {redis}

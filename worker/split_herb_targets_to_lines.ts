@@ -1,5 +1,5 @@
 import ExcelJs, {CellValue} from 'exceljs'
-import { input } from '@inquirer/prompts';
+import {input} from '@inquirer/prompts';
 import path from "path";
 // 定义一个类型来表示 row.values，它是一个从索引1开始的稀疏数组
 type RowValues = [undefined, ...Array<CellValue | undefined>];
@@ -46,7 +46,7 @@ wb.xlsx.readFile(file).then(() => {
         }
     })
 
-    const output = path.join(path.dirname(file),`${path.basename(file,path.extname(file))}_cvt.xlsx`)
+    const output = path.join(path.dirname(file), `${path.basename(file, path.extname(file))}_cvt.xlsx`)
 
     ano.xlsx.writeFile(output).then(() => {
         console.log("ok")
