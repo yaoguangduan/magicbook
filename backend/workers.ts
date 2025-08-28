@@ -1,7 +1,7 @@
 import {Context, Hono} from "hono";
 import {createMiddleware} from 'hono/factory'
 import {proxy} from 'hono/proxy'
-import {API_HEALTH_CHECK, API_NODE_OFFLINE, API_WORKER_REGISTER, API_WORKER_STATE, MAIN_PROC_LIST, MODE_MASTER, MODE_WORKER} from "./common/constants";
+import {API_HEALTH_CHECK, API_NODE_OFFLINE, API_WORKER_REGISTER, API_WORKER_STATE, API_WORKER_HEARTBEAT, MAIN_PROC_LIST, MODE_MASTER, MODE_WORKER} from "./common/constants";
 import {ConsistentHash} from "./common/hash";
 import {always3, retry3, retry3Wait} from "./common/retry";
 import {getExternalIP} from "./common/ip";
@@ -9,6 +9,8 @@ import logger from "./common/logger";
 
 let active = 0
 const hash = new ConsistentHash(50)
+const workerHeartbeats = new Map<string, number>() // 存储worker的最后心跳时间
+const HEARTBEAT_TIMEOUT = 30000 // 30秒心跳超时
 export const workerRegister = async (c: Context) => {
     const {host, port} = await c.req.json<{ port: number, host: string }>()
     const workerUrl = `http://${host}:${port}`

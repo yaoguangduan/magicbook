@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev:frontend": "cd frontend && vite --host",
-    "dev:backend": "ENV=dev bun backend/server.ts --mode master --workers 3",
+    "dev:backend": "bun backend/server.ts --mode master --workers 3",
     "dev": "concurrently \"bun run dev:frontend\" \"bun run dev:backend\"",
     "build": "cd frontend && vite build",
     "start": "bun backend/server.ts --mode master --workers 4"

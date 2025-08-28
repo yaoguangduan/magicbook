@@ -49,6 +49,7 @@ services:
         yarn install --verbose &&
         if [ \"$${ENV:-dev}\" = \"prod\" ]; then
           echo 'Starting prod mode...' &&
+          bun run build &&
           bun run start
         else
           echo 'Starting dev mode...' &&

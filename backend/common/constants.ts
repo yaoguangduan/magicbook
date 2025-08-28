@@ -5,6 +5,7 @@ export const MODE_WORKER = 'worker'
 // API路径常量
 export const API_WORKER_REGISTER = '/api/worker/register'
 export const API_WORKER_STATE = '/api/worker/state'
+export const API_WORKER_HEARTBEAT = '/api/worker/heartbeat'
 export const API_HEALTH_CHECK = '/api/health'
 export const API_NODE_OFFLINE = '/api/offline'
 
@@ -14,7 +15,8 @@ export const MASTER_ONLY_APIS = [
     '/api/auth/register',
     '/api/auth/logout',
     API_WORKER_REGISTER,
-    API_WORKER_STATE
+    API_WORKER_STATE,
+    API_WORKER_HEARTBEAT
 ]
 
 // Worker专用API
