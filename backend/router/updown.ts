@@ -23,11 +23,10 @@ export const download = async (c: Context) => {
     return c.body(file.stream())
 }
 export const upload = async (c: Context) => {
-    const payload = await c.get('jwtPayload')
-    console.log(payload)
-    const {file} = await c.req.parseBody<{ file: File }>()
+    const body = await c.req.parseBody<{ file: File }>()
+    const {file} = body
     if (!file) {
-        throw new Error(`bad request`)
+        throw new Error(`bad request - no file found in body`)
     }
     const uploadDir = UP_DOWN_DIR;
     try {

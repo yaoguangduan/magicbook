@@ -11,14 +11,9 @@ export async function httpClient(url:string, options:{
     body?: any
 }) {
     const token = localStorage.getItem('token')
-
-    // 确保 headers 存在
     const headers = {
-        'Content-Type': 'application/json',
         ...options.headers
     }
-
-    // 添加认证头
     if (token) {
         headers['Authorization'] = `Bearer ${token}`
     }
@@ -27,14 +22,12 @@ export async function httpClient(url:string, options:{
         ...options,
         headers
     }
-
-    console.log('🚀 HTTP Client Request:', {url, config})
-
     try {
-        const response = await fetch(url, config)
-
-        console.log('📡 HTTP Client Response:', response.status)
-
+        const response = await fetch(url, {
+            method: config.method,
+            headers: headers,
+            body: config.body
+        })
         if (response.status === 401) {
             console.log('🚫 Unauthorized - clearing auth and redirecting')
             localStorage.removeItem('token')

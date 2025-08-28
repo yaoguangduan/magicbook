@@ -3,3 +3,4 @@ backend/.mb
 backend/static
 node_modules
 backend/static
+logs

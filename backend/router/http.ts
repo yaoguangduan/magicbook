@@ -72,7 +72,7 @@ export const doReq = async (c: Context) => {
             if (typeof requestData.body === 'object' && requestData.body !== null) {
                 // 检查 Content-Type 来判断数据格式
                 const contentType = requestData.headers?.['Content-Type'] || requestData.headers?.['content-type'] || fetchOptions.headers['Content-Type'];
-                
+
                 if (contentType && contentType.includes('application/x-www-form-urlencoded')) {
                     // Form Data 格式 - 转换为 URLSearchParams
                     const formData = new URLSearchParams();
@@ -100,30 +100,30 @@ export const doReq = async (c: Context) => {
         // 带重试的请求发送
         let response: Response;
         let lastError: Error | null = null;
-        
+
         for (let attempt = 0; attempt <= settings.retries; attempt++) {
             try {
                 if (attempt > 0) {
                     console.log(`[HTTP] 重试第 ${attempt} 次...`);
                 }
-                
+
                 response = await fetch(requestData.url, fetchOptions);
-                
+
                 // 如果成功，跳出重试循环
                 break;
             } catch (error) {
                 lastError = error as Error;
-                
+
                 // 如果是最后一次尝试，抛出错误
                 if (attempt === settings.retries) {
                     throw error;
                 }
-                
+
                 // 等待一段时间后重试
                 await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
             }
         }
-        
+
         const endTime = Date.now();
         const responseTime = endTime - startTime;
 
@@ -176,12 +176,12 @@ export const doReq = async (c: Context) => {
             c.header('X-Response-StatusText', response.statusText);
             c.header('X-Response-Time', responseTime.toString());
             c.header('X-Is-Binary', 'true');
-            
+
             // 设置其他响应头
             Object.entries(responseHeaders).forEach(([key, value]) => {
                 c.header(`X-Original-${key}`, value);
             });
-            
+
             // 直接返回二进制数据
             return c.body(responseData);
         } else {
@@ -193,10 +193,10 @@ export const doReq = async (c: Context) => {
 
     } catch (error) {
         console.error('[HTTP] 请求失败:', error);
-        
+
         let errorMessage = '请求失败';
         let status = 500;
-        
+
         if (error.name === 'AbortError') {
             errorMessage = '请求超时';
             status = 408;

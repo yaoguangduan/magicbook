@@ -1,2 +1,8 @@
 [install]
 registry = "https://registry.npmmirror.com"
+
+[build]
+verbose = false
+
+[dev]
+verbose = false
