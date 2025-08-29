@@ -1,4 +1,4 @@
-import {download, upload} from "./updown";
+import {download, downloadByToken, upload} from "./updown";
 import {pdfConvert, pdfDecrypt, pdfEncrypt, pdfMerge, pdfSetPass} from "./pdf";
 import {Hono} from "hono";
 import {login} from "./login";
@@ -18,6 +18,7 @@ const initWorkerRoutes = (app: Hono) => {
     // 文件操作
     app.post('/api/upload', upload)
     app.get('/api/download', download)
+    app.get('/api/download/token', downloadByToken)  // token下载，无需认证
 
     // HTTP代理
     app.post('/api/http', doReq)

@@ -1,7 +1,7 @@
 import {Context, Hono} from "hono";
 import {createMiddleware} from 'hono/factory'
 import {proxy} from 'hono/proxy'
-import {API_HEALTH_CHECK, API_NODE_OFFLINE, API_WORKER_REGISTER, API_WORKER_STATE, API_WORKER_HEARTBEAT, MAIN_PROC_LIST, MODE_MASTER, MODE_WORKER} from "./common/constants";
+import {API_HEALTH_CHECK, API_NODE_OFFLINE, API_WORKER_REGISTER, API_WORKER_STATE, MAIN_PROC_LIST, MODE_MASTER, MODE_WORKER} from "./common/constants";
 import {ConsistentHash} from "./common/hash";
 import {always3, retry3, retry3Wait} from "./common/retry";
 import {getExternalIP} from "./common/ip";
@@ -9,8 +9,7 @@ import logger from "./common/logger";
 
 let active = 0
 const hash = new ConsistentHash(50)
-const workerHeartbeats = new Map<string, number>() // 存储worker的最后心跳时间
-const HEARTBEAT_TIMEOUT = 30000 // 30秒心跳超时
+
 export const workerRegister = async (c: Context) => {
     const {host, port} = await c.req.json<{ port: number, host: string }>()
     const workerUrl = `http://${host}:${port}`
@@ -49,17 +48,18 @@ export const proxyMiddleware = createMiddleware(async (c, next) => {
 
     const response = await proxy(targetUrl, requestInit)
 
-
     return response
 })
+
 export const activeMiddleware = createMiddleware(async (c, next) => {
     if (c.req.path === API_NODE_OFFLINE) {
-        return next()
+        return await next()
     }
     active++
     await next()
     active--
 })
+
 const startOneWorker = () => {
     Bun.spawn([process.env.positionals.split(' ')[0],
         process.env.positionals.split(' ')[1],
@@ -72,6 +72,7 @@ const startOneWorker = () => {
         stderr: 'inherit',
     })
 };
+
 export const startWorkers = (app: Hono) => {
     if (process.env.mode === MODE_MASTER) {
         const workerCount = Number.parseInt(process.env.workers || '0')
@@ -93,6 +94,7 @@ const offlineSelf = () => {
         setTimeout(offlineSelf, 1000)
     }
 };
+
 const nodeOffline = async (c: Context) => {
     if (process.env.mode === MODE_MASTER) {
         for (let node of hash.getAllNodes()) {
@@ -102,10 +104,12 @@ const nodeOffline = async (c: Context) => {
     offlineSelf()
     return c.json({message: 'ok'})
 };
+
 const workDetect = async () => {
     let urls = hash.getAllNodes()
     const current = urls.length
     let expected = Number.parseInt(process.env.workers || '0')
+    
     const alive = async (node: string) => {
         try {
             return (await fetch(node + API_HEALTH_CHECK)).ok
@@ -144,6 +148,7 @@ const workDetect = async () => {
 
     setTimeout(workDetect, 10000)
 }
+
 export const initWorkerAPIAndMiddleware = (app: Hono) => {
     if (process.env.mode === MODE_MASTER) {
         app.post(API_WORKER_REGISTER, workerRegister)
@@ -156,13 +161,14 @@ export const initWorkerAPIAndMiddleware = (app: Hono) => {
     app.get(API_NODE_OFFLINE, nodeOffline)
     app.use('/*', activeMiddleware)
 }
+
 export const startAndRegisterWorkers = async (app: Hono, server: Bun.Server) => {
     try {
         if (process.env.mode === MODE_MASTER) {
             startWorkers(app)
         }
         if (process.env.mode === MODE_WORKER) {
-            const b = await retry3Wait(async () => {
+            const r = await retry3Wait(async () => {
                 const resp = await fetch(`${process.env.master}${API_WORKER_REGISTER}`, {
                     method: 'POST',
                     headers: {
@@ -170,13 +176,13 @@ export const startAndRegisterWorkers = async (app: Hono, server: Bun.Server) => 
                     },
                     body: JSON.stringify({
                         port: server.port,
-                        host: getExternalIP(),
+                        host: getExternalIP()
                     })
                 })
                 return resp.ok
-            },10000)
-            if (!b) {
-                logger.error('Failed to register worker')
+            }, 10000)
+            if (!r.success) {
+                logger.error('Failed to register worker',r.error)
                 process.exit(1)
             }
         }

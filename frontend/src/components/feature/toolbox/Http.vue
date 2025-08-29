@@ -36,45 +36,45 @@
                     </a-option>
                 </a-select>
 
-                                 <!-- 操作按钮组 -->
-                 <a-button-group>
-                     <a-button
-                         :disabled="!hasRequestData"
-                         @click="handleSave"
-                     >
-                         <template #icon>
-                             <icon-save/>
-                         </template>
-                         保存
-                     </a-button>
-                     <a-dropdown trigger="click">
-                         <a-button :disabled="!hasRequestData">
-                             <template #icon>
-                                 <icon-down/>
-                             </template>
-                         </a-button>
-                         <template #content>
-                             <a-doption @click="handleNew">
-                                 <template #icon>
-                                     <icon-plus/>
-                                 </template>
-                                 新建
-                             </a-doption>
-                             <a-doption :disabled="!httpClientData.ui.selectedSavedRequest" @click="handleCopy">
-                                 <template #icon>
-                                     <icon-copy/>
-                                 </template>
-                                 复制
-                             </a-doption>
-                             <a-doption :disabled="!httpClientData.ui.selectedSavedRequest" class="delete-option" @click="handleDelete">
-                                 <template #icon>
-                                     <icon-delete/>
-                                 </template>
-                                 删除
-                             </a-doption>
-                         </template>
-                     </a-dropdown>
-                 </a-button-group>
+                <!-- 操作按钮组 -->
+                <a-button-group>
+                    <a-button
+                        :disabled="!hasRequestData"
+                        @click="handleSave"
+                    >
+                        <template #icon>
+                            <icon-save/>
+                        </template>
+                        保存
+                    </a-button>
+                    <a-dropdown trigger="click">
+                        <a-button :disabled="!hasRequestData">
+                            <template #icon>
+                                <icon-down/>
+                            </template>
+                        </a-button>
+                        <template #content>
+                            <a-doption @click="handleNew">
+                                <template #icon>
+                                    <icon-plus/>
+                                </template>
+                                新建
+                            </a-doption>
+                            <a-doption :disabled="!httpClientData.ui.selectedSavedRequest" @click="handleCopy">
+                                <template #icon>
+                                    <icon-copy/>
+                                </template>
+                                复制
+                            </a-doption>
+                            <a-doption :disabled="!httpClientData.ui.selectedSavedRequest" class="delete-option" @click="handleDelete">
+                                <template #icon>
+                                    <icon-delete/>
+                                </template>
+                                删除
+                            </a-doption>
+                        </template>
+                    </a-dropdown>
+                </a-button-group>
 
                 <!-- HTTP 方法选择 -->
                 <a-select v-model="httpClientData.request.method" :style="{ width: '100px' }" class="method-select">
@@ -144,8 +144,8 @@
         <a-modal
             v-model:visible="httpClientData.ui.downloadDialogVisible"
             title="下载文件"
-            @ok="confirmDownload"
             @cancel="httpClientData.ui.downloadDialogVisible = false"
+            @ok="confirmDownload"
         >
             <a-form :model="httpClientData.download.form" layout="vertical">
                 <a-form-item label="文件名" required>
@@ -234,48 +234,48 @@
                 <template #first>
                     <!-- 左侧：请求配置 -->
                     <a-tabs v-model:active-key="httpClientData.ui.requestActiveTab" class="request-tabs">
-                                                 <!-- Body 标签页 -->
-                         <a-tab-pane key="body" class="body-tab-pane" title="Body">
-                             <div class="body-config">
-                                 <a-radio-group v-model="httpClientData.request.bodyType" class="body-type-selector">
-                                     <a-radio value="none">None</a-radio>
-                                     <a-radio value="body">Body</a-radio>
-                                     <a-radio value="form">Form Data</a-radio>
-                                 </a-radio-group>
+                        <!-- Body 标签页 -->
+                        <a-tab-pane key="body" class="body-tab-pane" title="Body">
+                            <div class="body-config">
+                                <a-radio-group v-model="httpClientData.request.bodyType" class="body-type-selector">
+                                    <a-radio value="none">None</a-radio>
+                                    <a-radio value="body">Body</a-radio>
+                                    <a-radio value="form">Form Data</a-radio>
+                                </a-radio-group>
 
-                                 <div v-if="httpClientData.request.bodyType !== 'none'" class="body-content">
-                                     <!-- Body 编辑器 -->
-                                     <div v-if="httpClientData.request.bodyType === 'body'" class="body-editor">
-                                         <CodeMirror
-                                             v-model="httpClientData.request.body.text"
-                                             :style="{ height: editorHeight, width: '100%' }"
-                                             basic
-                                             class="body-codemirror"
-                                             placeholder="请输入请求体内容（JSON、XML、文本等）"
-                                         />
-                                     </div>
+                                <div v-if="httpClientData.request.bodyType !== 'none'" class="body-content">
+                                    <!-- Body 编辑器 -->
+                                    <div v-if="httpClientData.request.bodyType === 'body'" class="body-editor">
+                                        <CodeMirror
+                                            v-model="httpClientData.request.body.text"
+                                            :style="{ height: editorHeight, width: '100%' }"
+                                            basic
+                                            class="body-codemirror"
+                                            placeholder="请输入请求体内容（JSON、XML、文本等）"
+                                        />
+                                    </div>
 
-                                     <!-- Form Data -->
-                                     <div v-if="httpClientData.request.bodyType === 'form'" class="form-data">
-                                         <div v-for="(item, index) in httpClientData.request.body.formData" :key="index" class="form-item">
-                                             <a-input v-model="item.key" class="form-key" placeholder="Key"/>
-                                             <a-input v-model="item.value" class="form-value" placeholder="Value"/>
-                                             <a-button size="small" type="text" @click="removeFormItem(index)">
-                                                 <template #icon>
-                                                     <icon-delete/>
-                                                 </template>
-                                             </a-button>
-                                         </div>
-                                         <a-button class="add-form-btn" size="small" type="dashed" @click="addFormItem">
-                                             <template #icon>
-                                                 <icon-plus/>
-                                             </template>
-                                             添加字段
-                                         </a-button>
-                                     </div>
-                                 </div>
-                             </div>
-                         </a-tab-pane>
+                                    <!-- Form Data -->
+                                    <div v-if="httpClientData.request.bodyType === 'form'" class="form-data">
+                                        <div v-for="(item, index) in httpClientData.request.body.formData" :key="index" class="form-item">
+                                            <a-input v-model="item.key" class="form-key" placeholder="Key"/>
+                                            <a-input v-model="item.value" class="form-value" placeholder="Value"/>
+                                            <a-button size="small" type="text" @click="removeFormItem(index)">
+                                                <template #icon>
+                                                    <icon-delete/>
+                                                </template>
+                                            </a-button>
+                                        </div>
+                                        <a-button class="add-form-btn" size="small" type="dashed" @click="addFormItem">
+                                            <template #icon>
+                                                <icon-plus/>
+                                            </template>
+                                            添加字段
+                                        </a-button>
+                                    </div>
+                                </div>
+                            </div>
+                        </a-tab-pane>
 
                         <!-- Headers 标签页 -->
                         <a-tab-pane key="headers" title="Headers">
@@ -355,22 +355,22 @@
                             <div class="settings-config">
                                 <div class="settings-section">
                                     <h4 class="section-title">网络设置</h4>
-                                    
-                                    <a-form-item label="超时时间 (秒)" class="setting-item">
-                                        <a-input-number 
-                                            :model-value="Math.floor(httpClientData.request.settings.timeout / 1000)" 
-                                            :min="1" 
-                                            :max="300" 
+
+                                    <a-form-item class="setting-item" label="超时时间 (秒)">
+                                        <a-input-number
+                                            :max="300"
+                                            :min="1"
+                                            :model-value="Math.floor(httpClientData.request.settings.timeout / 1000)"
                                             :step="1"
-                                            @update:model-value="(val) => httpClientData.request.settings.timeout = val * 1000"
                                             style="width: 120px"
+                                            @update:model-value="(val) => httpClientData.request.settings.timeout = val * 1000"
                                         />
                                         <span class="setting-description">请求超时时间，1-300秒</span>
                                     </a-form-item>
 
-                                    <a-form-item label="用户代理" class="setting-item">
-                                        <a-input 
-                                            v-model="httpClientData.request.settings.userAgent" 
+                                    <a-form-item class="setting-item" label="用户代理">
+                                        <a-input
+                                            v-model="httpClientData.request.settings.userAgent"
                                             placeholder="User-Agent"
                                             style="width: 300px"
                                         />
@@ -379,7 +379,7 @@
 
                                 <div class="settings-section">
                                     <h4 class="section-title">安全设置</h4>
-                                    
+
                                     <a-form-item class="setting-item">
                                         <a-checkbox v-model="httpClientData.request.settings.sslVerify">
                                             SSL 证书验证
@@ -390,7 +390,7 @@
 
                                 <div class="settings-section">
                                     <h4 class="section-title">重定向设置</h4>
-                                    
+
                                     <a-form-item class="setting-item">
                                         <a-checkbox v-model="httpClientData.request.settings.followRedirects">
                                             跟随重定向
@@ -398,11 +398,11 @@
                                         <span class="setting-description">自动跟随 3xx 重定向响应</span>
                                     </a-form-item>
 
-                                    <a-form-item label="最大重定向次数" class="setting-item" v-if="httpClientData.request.settings.followRedirects">
-                                        <a-input-number 
-                                            v-model="httpClientData.request.settings.maxRedirects" 
-                                            :min="0" 
-                                            :max="20" 
+                                    <a-form-item v-if="httpClientData.request.settings.followRedirects" class="setting-item" label="最大重定向次数">
+                                        <a-input-number
+                                            v-model="httpClientData.request.settings.maxRedirects"
+                                            :max="20"
+                                            :min="0"
                                             :step="1"
                                             style="width: 120px"
                                         />
@@ -412,12 +412,12 @@
 
                                 <div class="settings-section">
                                     <h4 class="section-title">重试设置</h4>
-                                    
-                                    <a-form-item label="重试次数" class="setting-item">
-                                        <a-input-number 
-                                            v-model="httpClientData.request.settings.retries" 
-                                            :min="0" 
-                                            :max="10" 
+
+                                    <a-form-item class="setting-item" label="重试次数">
+                                        <a-input-number
+                                            v-model="httpClientData.request.settings.retries"
+                                            :max="10"
+                                            :min="0"
                                             :step="1"
                                             style="width: 120px"
                                         />
@@ -433,81 +433,81 @@
                     <!-- 右侧：响应结果 -->
                     <a-tabs v-model:active-key="httpClientData.ui.responseActiveTab" class="response-tabs">
                         <template #extra>
-                                                         <div v-if="httpClientData.response.status" class="response-status-info">
+                            <div v-if="httpClientData.response.status" class="response-status-info">
                <span :class="getStatusClass(httpClientData.response.status)" class="status-code">
                  {{ httpClientData.response.status }}
                </span>
-                                 <span v-if="httpClientData.response.time" 
-                                       :class="getResponseTimeClass(httpClientData.response.time)" 
-                                       class="response-time">
+                                <span v-if="httpClientData.response.time"
+                                      :class="getResponseTimeClass(httpClientData.response.time)"
+                                      class="response-time">
                                      {{ formatResponseTime(httpClientData.response.time) }}
                                  </span>
-                             </div>
+                            </div>
                         </template>
 
-                                                 <!-- Response Body -->
-                         <a-tab-pane key="body" class="response-tab-pane" title="Response">
-                             <div class="response-body">
-                                 <div class="response-toolbar">
-                                     <div class="response-actions">
-                                         <!-- 二进制数据显示下载按钮 -->
-                                         <template v-if="httpClientData.response.data && httpClientData.response.isBinary">
-                                             <a-button size="mini" @click="downloadBinaryResponse">
-                                                 下载
-                                                 <template #icon>
-                                                     <icon-download/>
-                                                 </template>
-                                             </a-button>
-                                         </template>
-                                         
-                                         <!-- 文本数据显示复制和格式化按钮 -->
-                                         <template v-else-if="httpClientData.response.data">
-                                             <a-button size="mini" @click="copyResponse">
-                                                 复制
-                                                 <template #icon>
-                                                     <icon-copy/>
-                                                 </template>
-                                             </a-button>
-                                             <a-button v-if="canBeautify" size="mini" @click="beautifyResponse">
-                                                 格式化
-                                                 <template #icon>
-                                                     <icon-code/>
-                                                 </template>
-                                             </a-button>
-                                         </template>
-                                     </div>
-                                     <div class="response-info">
+                        <!-- Response Body -->
+                        <a-tab-pane key="body" class="response-tab-pane" title="Response">
+                            <div class="response-body">
+                                <div class="response-toolbar">
+                                    <div class="response-actions">
+                                        <!-- 二进制数据显示下载按钮 -->
+                                        <template v-if="httpClientData.response.data && httpClientData.response.isBinary">
+                                            <a-button size="mini" @click="downloadBinaryResponse">
+                                                下载
+                                                <template #icon>
+                                                    <icon-download/>
+                                                </template>
+                                            </a-button>
+                                        </template>
+
+                                        <!-- 文本数据显示复制和格式化按钮 -->
+                                        <template v-else-if="httpClientData.response.data">
+                                            <a-button size="mini" @click="copyResponse">
+                                                复制
+                                                <template #icon>
+                                                    <icon-copy/>
+                                                </template>
+                                            </a-button>
+                                            <a-button v-if="canBeautify" size="mini" @click="beautifyResponse">
+                                                格式化
+                                                <template #icon>
+                                                    <icon-code/>
+                                                </template>
+                                            </a-button>
+                                        </template>
+                                    </div>
+                                    <div class="response-info">
                                          <span v-if="httpClientData.response.data" class="response-size">
                                              {{ formatResponseSize(httpClientData.response.data) }}
                                          </span>
-                                     </div>
-                                 </div>
+                                    </div>
+                                </div>
 
-                                 <div class="response-content">
-                                     <div v-if="!httpClientData.response.data && !httpClientData.ui.loading" class="empty-response">
-                                         <icon-info-circle class="empty-icon"/>
-                                         <p>发送请求后，响应内容将显示在这里</p>
-                                     </div>
+                                <div class="response-content">
+                                    <div v-if="!httpClientData.response.data && !httpClientData.ui.loading" class="empty-response">
+                                        <icon-info-circle class="empty-icon"/>
+                                        <p>发送请求后，响应内容将显示在这里</p>
+                                    </div>
 
-                                     <div v-else-if="httpClientData.ui.loading" class="loading-response">
-                                         <a-spin :size="32"/>
-                                         <p>请求发送中...</p>
-                                     </div>
+                                    <div v-else-if="httpClientData.ui.loading" class="loading-response">
+                                        <a-spin :size="32"/>
+                                        <p>请求发送中...</p>
+                                    </div>
 
-                                     <div v-else class="response-data">
-                                         <CodeMirror
-                                             :model-value="httpClientData.response.isBinary ? formatBinaryAsHex(httpClientData.response.data) : formatResponse(httpClientData.response.data)"
-                                             :style="{ height: editorHeight, width: '100%' }"
-                                             basic
-                                             class="response-codemirror"
-                                             :class="{ 'hex-viewer': httpClientData.response.isBinary }"
-                                             :extensions="httpClientData.response.isBinary ? [] : [json()]"
-                                             :readonly="true"
-                                         />
-                                     </div>
-                                 </div>
-                             </div>
-                         </a-tab-pane>
+                                    <div v-else class="response-data">
+                                        <CodeMirror
+                                            :class="{ 'hex-viewer': httpClientData.response.isBinary }"
+                                            :extensions="httpClientData.response.isBinary ? [] : [json()]"
+                                            :model-value="httpClientData.response.isBinary ? formatBinaryAsHex(httpClientData.response.data) : formatResponse(httpClientData.response.data)"
+                                            :readonly="true"
+                                            :style="{ height: editorHeight, width: '100%' }"
+                                            basic
+                                            class="response-codemirror"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </a-tab-pane>
 
                         <!-- Response Headers -->
                         <a-tab-pane key="headers" title="Response Headers">
@@ -533,7 +533,7 @@
 <script lang="ts" setup>
 import {computed, onActivated, onMounted, onUnmounted, reactive, ref} from 'vue'
 import {Message, Modal} from '@arco-design/web-vue'
-import {IconCode, IconCopy, IconDelete, IconDown, IconDownload, IconFile, IconInfoCircle, IconPlus, IconSave} from '@arco-design/web-vue/es/icon'
+import {IconCode, IconCopy, IconDelete, IconDown, IconDownload, IconInfoCircle, IconPlus, IconSave} from '@arco-design/web-vue/es/icon'
 
 import {json} from '@codemirror/lang-json'
 import CodeMirror from 'vue-codemirror6'
@@ -769,7 +769,7 @@ const sendRequest = async () => {
                 const statusText = res.headers.get('X-Response-StatusText') || ''
                 const time = parseInt(res.headers.get('X-Response-Time') || '0')
                 const contentType = res.headers.get('Content-Type') || ''
-                
+
                 // 提取原始响应头
                 const originalHeaders: Record<string, string> = {}
                 res.headers.forEach((value, key) => {
@@ -778,7 +778,7 @@ const sendRequest = async () => {
                         originalHeaders[originalKey] = value
                     }
                 })
-                
+
                 httpClientData.response = {
                     status: status,
                     statusText: statusText,
@@ -788,12 +788,12 @@ const sendRequest = async () => {
                     isBinary: true,
                     contentType: contentType
                 }
-                
+
                 Message.success('请求发送成功')
             } else {
                 // 处理普通 JSON 响应
                 const result = await res.json()
-                
+
                 if (result.success) {
                     // 服务端返回的响应数据
                     httpClientData.response = {
@@ -866,7 +866,7 @@ const formatResponse = (data: any) => {
 const formatBinaryAsHex = (arrayBuffer: ArrayBuffer) => {
     const bytes = new Uint8Array(arrayBuffer)
     let hex = ''
-    
+
     for (let i = 0; i < bytes.length; i++) {
         // 每16个字节换一行
         if (i > 0 && i % 16 === 0) {
@@ -876,11 +876,11 @@ const formatBinaryAsHex = (arrayBuffer: ArrayBuffer) => {
         else if (i > 0 && i % 4 === 0) {
             hex += ' '
         }
-        
+
         // 转换为两位十六进制
         hex += bytes[i].toString(16).padStart(2, '0')
     }
-    
+
     return hex
 }
 
@@ -994,7 +994,7 @@ const saveRequest = async () => {
             status: httpClientData.response.status,
             statusText: httpClientData.response.statusText,
             headers: httpClientData.response.headers,
-            data: httpClientData.response.isBinary 
+            data: httpClientData.response.isBinary
                 ? Array.from(new Uint8Array(httpClientData.response.data))  // 将 ArrayBuffer 转换为数组
                 : httpClientData.response.data,
             time: httpClientData.response.time,
@@ -1069,7 +1069,7 @@ const copyRequest = async () => {
             status: httpClientData.response.status,
             statusText: httpClientData.response.statusText,
             headers: httpClientData.response.headers,
-            data: httpClientData.response.isBinary 
+            data: httpClientData.response.isBinary
                 ? Array.from(new Uint8Array(httpClientData.response.data))  // 将 ArrayBuffer 转换为数组
                 : httpClientData.response.data,
             time: httpClientData.response.time,
@@ -1282,8 +1282,8 @@ const getResponseTimeClass = (time: number) => {
 // 判断响应内容是否可以美化
 const canBeautify = computed(() => {
     if (!httpClientData.response.data) return false
-    const dataStr = typeof httpClientData.response.data === 'string' 
-        ? httpClientData.response.data 
+    const dataStr = typeof httpClientData.response.data === 'string'
+        ? httpClientData.response.data
         : JSON.stringify(httpClientData.response.data)
     const format = detect(dataStr)
     return format === FORMAT.JSON || format === FORMAT.XML
@@ -1292,7 +1292,7 @@ const canBeautify = computed(() => {
 // 格式化响应大小
 const formatResponseSize = (data: any) => {
     let size: number
-    
+
     if (data instanceof ArrayBuffer) {
         size = data.byteLength
     } else if (typeof data === 'string') {
@@ -1300,7 +1300,7 @@ const formatResponseSize = (data: any) => {
     } else {
         size = new Blob([JSON.stringify(data)]).size
     }
-    
+
     if (size < 1024) {
         return `${size} B`
     } else if (size < 1024 * 1024) {
@@ -1315,10 +1315,10 @@ const formatResponseSize = (data: any) => {
 // 美化响应内容
 const beautifyResponse = () => {
     try {
-        const dataStr = typeof httpClientData.response.data === 'string' 
-            ? httpClientData.response.data 
+        const dataStr = typeof httpClientData.response.data === 'string'
+            ? httpClientData.response.data
             : JSON.stringify(httpClientData.response.data)
-        
+
         const format = detect(dataStr)
         if (format === FORMAT.JSON) {
             // 美化 JSON
@@ -1341,7 +1341,7 @@ const downloadBinaryResponse = () => {
     // 生成默认文件名
     let defaultFilename = 'download'
     const contentType = httpClientData.response.contentType || ''
-    
+
     // 根据 Content-Type 生成合适的文件名
     if (contentType.includes('image/')) {
         const ext = contentType.split('/')[1] || 'bin'
@@ -1400,7 +1400,7 @@ const confirmDownload = () => {
 
         Message.success(`文件已下载: ${filename}`)
         httpClientData.ui.downloadDialogVisible = false
-        
+
         // 清空表单
         httpClientData.download.form.filename = ''
     } catch (error) {
@@ -2071,7 +2071,6 @@ defineExpose({
     min-height: 0;
     overflow: hidden;
 }
-
 
 
 /* 十六进制查看器样式 */

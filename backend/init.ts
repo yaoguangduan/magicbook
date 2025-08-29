@@ -6,12 +6,12 @@ import {jwt} from "hono/jwt";
 import {HTTPException} from "hono/http-exception";
 import {requestId} from "hono/request-id";
 import logger from "./common/logger";
+import {startFileCleaner} from "./common/file-cleaner";
 
 process.env.CANVAS_SILENT = 'true';
 process.env.CANVAS_VERBOSE = 'false';
 process.env.CANVAS_DEBUG = 'false';
 export const initEnv = () => {
-
     const {values, positionals} = parseArgs({
         args: Bun.argv,
         options: {
@@ -46,6 +46,9 @@ export const initEnv = () => {
     if (process.env.master === undefined) {
         process.env.master = 'http://localhost:3000'
     }
+    if (process.env.mode === MODE_MASTER) {
+        startFileCleaner();
+    }
 }
 export const initStatic = (app: Hono) => {
     if (process.env.mode === MODE_MASTER) {
@@ -59,7 +62,7 @@ export const initStatic = (app: Hono) => {
 export const initAuth = (app: Hono) => {
     app.use('/api/*', async (c: Context, next) => {
         if (AUTH_FREE_APIS.includes(c.req.path)) {
-            return next()
+            return await next()
         }
         return jwt({
             secret: process.env.JWT_SECRET,
@@ -99,34 +102,12 @@ export const initRequestIdAndLogger = (app: Hono) => {
             req: {
                 method: c.req.method,
                 url: c.req.url,
-                userAgent: c.req.header('user-agent'),
-                contentType: c.req.header('content-type')
+                path: c.req.path,
+                headers: c.req.header(),
             }
         })
 
-        // 绑定到context
         c.set('logger', reqLogger)
-        c.set('requestId', currentRequestId)
-
-        // 记录请求开始
-        const startTime = Date.now()
-
         await next()
-
-        // 只记录有问题的请求
-        const duration = Date.now() - startTime
-        const status = c.res.status
-
-        if (status >= 400) {
-            const logLevel = status >= 500 ? 'error' : 'warn'
-            const message = `${c.req.method} ${c.req.url} ${status} ${duration}ms`
-
-            reqLogger[logLevel](message, {
-                res: {
-                    statusCode: status,
-                    responseTime: duration
-                }
-            })
-        }
     })
 }

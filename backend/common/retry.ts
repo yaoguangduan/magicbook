@@ -1,38 +1,35 @@
 export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-export const retry3 = async (fn: () => Promise<boolean>): Promise<boolean> => {
-    let i = 0
-    while (i < 3) {
-        try {
-            const res = await fn()
-            if (res) {
-                return true
-            } else {
-                i++
-            }
-        } catch (e) {
-            i++
-        }
-    }
-    return false
+export interface RetryResult {
+    success: boolean;
+    error?: Error | null;  // 修复：应该是小写error
 }
-export const retry3Wait = async (fn: () => Promise<boolean>,timeout: number): Promise<boolean> => {
-    let i = 0
-    while (i < 3) {
+const retry = async (fn: () => Promise<boolean>,times: number,timeout: number): Promise<RetryResult> => {
+    let r:RetryResult = {success: false}
+    while (times > 0) {
         try {
             const res = await fn()
             if (res) {
-                return true
+                r.success = true
+                return r
             } else {
-                sleep(timeout)
-                i++
+                times--
             }
         } catch (e) {
-            sleep(timeout)
-            i++
+            times--
+            r.error = e instanceof Error ? e : new Error(String(e));  // 确保类型安全
+        } finally {
+            if (timeout !== undefined && timeout > 0) {
+                await sleep(timeout)
+            }
         }
     }
-    return false
+    return r
+}
+export const retry3 = async (fn: () => Promise<boolean>): Promise<RetryResult> => {
+    return retry(fn, 3, 0)  // 修复：添加timeout参数
+}
+export const retry3Wait = async (fn: () => Promise<boolean>, timeout: number): Promise<RetryResult> => {
+    return retry(fn, 3, timeout)
 }
 export const always3 = async (fn: () => Promise<void>) => {
     let i = 0

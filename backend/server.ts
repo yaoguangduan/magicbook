@@ -11,9 +11,9 @@ import {getExternalIP} from "./common/ip";
 const app = new Hono();
 initEnv()
 initStatic(app)
+initRequestIdAndLogger(app)  // 日志中间件提前
 initAuth(app)
 initNotFoundAndErrorHand(app)
-initRequestIdAndLogger(app)
 initWorkerAPIAndMiddleware(app)
 app.use(prettyJSON());
 

@@ -4,6 +4,7 @@ import path from "path";
 import fs from "node:fs/promises";
 import {PDFDocument} from "@cantoo/pdf-lib";
 import JSZip from 'jszip'
+import {registerDownloadToken} from "./updown";
 
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 import * as bun from "bun";
@@ -27,9 +28,11 @@ export const pdfMerge = async (c: Context) => {
     if (result.type === 'error') {
         return c.json(result, 500)
     } else {
+        const filename = `${ms}_merge.pdf`
+        const token = registerDownloadToken(filename)
         return c.json({
             type: 'success',
-            message: `${ms}_merge.pdf`
+            message: token
         })
     }
 }
@@ -79,9 +82,10 @@ export const pdfEncrypt = async (c: Context) => {
             }
             const fileName = `${Date.now()}_${id.replaceAll(".pdf", "")}_encrypted.pdf`
             await fs.writeFile(path.join(UP_DOWN_DIR, fileName), data)
+            const token = registerDownloadToken(fileName)
             return c.json({
                 type: 'success',
-                message: fileName
+                message: token
             })
         } else {
             if (zip === null) {
@@ -97,9 +101,10 @@ export const pdfEncrypt = async (c: Context) => {
         const data = await zip.generateAsync({type: "uint8array"})
         const fileName = `${Date.now()}_encrypted.zip`
         await fs.writeFile(path.join(UP_DOWN_DIR, fileName), data)
+        const token = registerDownloadToken(fileName)
         return c.json({
             type: 'success',
-            message: fileName
+            message: token
         })
     }
 
@@ -124,9 +129,10 @@ export const pdfDecrypt = async (c: Context) => {
             }
             const fileName = `${Date.now()}_${id.replaceAll(".pdf", "")}_decrypted.pdf`
             await fs.writeFile(path.join(UP_DOWN_DIR, fileName), data)
+            const token = registerDownloadToken(fileName)
             return c.json({
                 type: 'success',
-                message: fileName
+                message: token
             })
         } else {
             if (zip === null) {
@@ -143,9 +149,10 @@ export const pdfDecrypt = async (c: Context) => {
         const data = await zip.generateAsync({type: "uint8array"})
         const fileName = `${Date.now()}_decrypted.zip`
         await fs.writeFile(path.join(UP_DOWN_DIR, fileName), data)
+        const token = registerDownloadToken(fileName)
         return c.json({
             type: 'success',
-            message: fileName
+            message: token
         })
     }
 }
@@ -194,8 +201,9 @@ export const pdfConvert = async (c: Context) => {
     const data = await zip.generateAsync({type: "uint8array"})
     const ret_name = `${Date.now()}_convert.zip`
     await bun.write(path.join(UP_DOWN_DIR, ret_name), data)
+    const token = registerDownloadToken(ret_name)
     return c.json({
         type: 'success',
-        message: ret_name
+        message: token
     })
 }

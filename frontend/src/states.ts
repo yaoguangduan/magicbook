@@ -4,7 +4,8 @@ import {getCurrentUsername} from "./utils/auth.js";
 // 创建响应式状态
 export const appState = reactive({
     route: '/',
-    username: ''
+    username: '',
+    targetRoute: null as string | null  // 保存登录后要跳转的目标路由
 })
 
 // 应用启动时从 token 中恢复用户名
@@ -45,4 +46,19 @@ export function syncUsernameFromToken() {
         console.log('🔄 手动同步用户名:', username)
     }
     return username
+}
+
+// 目标路由管理
+export function setTargetRoute(route: string) {
+    appState.targetRoute = route
+    console.log('💾 设置目标路由:', route)
+}
+
+export function getTargetRoute(): string | null {
+    return appState.targetRoute
+}
+
+export function clearTargetRoute() {
+    appState.targetRoute = null
+    console.log('🧹 清除目标路由')
 }

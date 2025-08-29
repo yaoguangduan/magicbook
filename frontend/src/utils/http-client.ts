@@ -5,7 +5,7 @@ import router from '../router/index.js'
 /**
  * 带认证的 fetch 封装
  */
-export async function httpClient(url:string, options:{
+export async function httpClient(url: string, options: {
     method?: string,
     headers?: Record<string, string>,
     body?: any
@@ -18,6 +18,7 @@ export async function httpClient(url:string, options:{
         headers['Authorization'] = `Bearer ${token}`
     }
 
+    console.log('🚀 ~ file: http-client.ts:35 ~ httpClient ~ headers:', headers)
     const config = {
         ...options,
         headers

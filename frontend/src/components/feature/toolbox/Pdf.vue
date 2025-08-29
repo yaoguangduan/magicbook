@@ -4,13 +4,15 @@
         <!-- 文件添加区域 -->
         <div class="upload-section">
             <a-upload
+                :tip="null"
                 ref="uploadRef"
                 :before-upload="beforeUpload"
                 :custom-request="customUpload"
                 :show-file-list="false"
                 accept=".pdf"
                 class="pdf-upload"
-                content="将PDF文件拖到此处，或点击添加"
+                :content="null"
+                :drag-tip="null"
                 drag
                 draggable
                 multiple
@@ -41,7 +43,10 @@
                         <template #cell="{ record }">
                             <div class="file-info">
                                 <icon-file class="file-icon"/>
-                                <span class="file-name">{{ record.name }}</span>
+                                <div class="file-details">
+                                    <span class="file-name">{{ record.name }}</span>
+                                    <span class="file-time">{{ formatDate(record.uploadTime) }}</span>
+                                </div>
                             </div>
                         </template>
                     </a-table-column>
@@ -102,11 +107,7 @@
                         </template>
                     </a-table-column>
 
-                    <a-table-column :width="160" data-index="uploadTime" title="添加时间">
-                        <template #cell="{ record }">
-                            {{ formatDate(record.uploadTime) }}
-                        </template>
-                    </a-table-column>
+
 
                     <a-table-column :width="340" fixed="right" title="操作">
                         <template #cell="{ record }">
@@ -197,7 +198,6 @@ import {Message, Modal} from '@arco-design/web-vue'
 import {IconFile, IconLock} from '@arco-design/web-vue/es/icon'
 import {PDFDocument} from '@cantoo/pdf-lib'
 import {showInput} from "../../common/modal";
-import {saveAs} from 'file-saver'
 import * as pdfjsLib from 'pdfjs-dist';
 import httpClient from "../../../utils/http-client";
 
@@ -405,7 +405,13 @@ const encryptPdf = async (files: PdfFile[]) => {
         const data = await resp.json()
 
         if (data.type === 'success') {
-            saveAs(`api/download?filename=${data.message}`, data.message)
+            // 创建隐藏的a标签进行下载，不离开当前页面
+            const a = document.createElement('a')
+            a.href = `/api/download/token?token=${data.message}`
+            a.style.display = 'none'
+            document.body.appendChild(a)
+            a.click()
+            document.body.removeChild(a)
         } else {
             Message.error('加密失败：' + data.error)
         }
@@ -466,7 +472,13 @@ const decryptPdf = async (files) => {
         const data = await resp.json()
 
         if (data.type === 'success') {
-            saveAs(`api/download?filename=${data.message}`, data.message)
+            // 创建隐藏的a标签进行下载，不离开当前页面
+            const a = document.createElement('a')
+            a.href = `/api/download/token?token=${data.message}`
+            a.style.display = 'none'
+            document.body.appendChild(a)
+            a.click()
+            document.body.removeChild(a)
         } else {
             Message.error('加密失败：' + data.error)
         }
@@ -529,7 +541,13 @@ const convertPdf = async () => {
         loading.close()
         if (resp.ok) {
             const data = await resp.json()
-            saveAs(`api/download?filename=${data.message}`, data.message)
+            // 创建隐藏的a标签进行下载，不离开当前页面
+            const a = document.createElement('a')
+            a.href = `/api/download/token?token=${data.message}`
+            a.style.display = 'none'
+            document.body.appendChild(a)
+            a.click()
+            document.body.removeChild(a)
             Message.success('转换完成')
         } else {
             const data = await resp.json()
@@ -597,7 +615,13 @@ const batchMerge = async () => {
             return
         } else {
             Message.success('合并成功')
-            saveAs(`/api/download?filename=${data.message}`, data.message)
+            // 创建隐藏的a标签进行下载，不离开当前页面
+            const a = document.createElement('a')
+            a.href = `/api/download/token?token=${data.message}`
+            a.style.display = 'none'
+            document.body.appendChild(a)
+            a.click()
+            document.body.removeChild(a)
         }
     } catch (e) {
         loading.close()
@@ -670,6 +694,7 @@ const formatDate = (date: Date): string => {
 
 <style scoped>
 .pdf-page {
+    background: white;
     padding: 20px;
 }
 
@@ -680,8 +705,8 @@ const formatDate = (date: Date): string => {
 }
 
 .pdf-upload {
-    max-width: 100%;
     width: 100%;
+
 }
 
 :deep(.arco-upload-drag) {
@@ -699,6 +724,15 @@ const formatDate = (date: Date): string => {
 
 :deep(.arco-upload-drag-content) {
     height: 100%;
+}
+
+/* 隐藏默认的上传提示文字 */
+:deep(.arco-upload-drag-text) {
+    display: none !important;
+}
+
+:deep(.arco-upload-drag-tip) {
+    display: none !important;
 }
 
 .upload-content {
@@ -729,6 +763,7 @@ const formatDate = (date: Date): string => {
 }
 
 .pdf-list-section {
+    margin-top: 10px;
     margin-bottom: 32px;
 }
 
@@ -741,17 +776,32 @@ const formatDate = (date: Date): string => {
 
 .file-info {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 8px;
 }
 
 .file-icon {
     color: #f53f3f;
     font-size: 16px;
+    margin-top: 1px;
+}
+
+.file-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
 }
 
 .file-name {
     font-weight: 500;
+    color: #1d2129;
+    line-height: 1.2;
+}
+
+.file-time {
+    font-size: 11px;
+    color: #86909c;
+    line-height: 1.2;
 }
 
 .batch-actions {

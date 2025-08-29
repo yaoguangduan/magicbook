@@ -9,10 +9,8 @@
 
 <script lang="ts" setup>
 import JsonEditorVue from 'json-editor-vue'
-import {ref, watch} from "vue";
+import {ref} from "vue";
 import {Mode} from 'vanilla-jsoneditor'
-import {useRoute} from 'vue-router'
-import httpClient from "../../../utils/http-client";
 
 defineOptions({
     name: 'Json'
