@@ -1,4 +1,5 @@
-export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+import * as bun from "bun";
+
 export interface RetryResult {
     success: boolean;
     error?: Error | null;  // 修复：应该是小写error
@@ -19,7 +20,7 @@ const retry = async (fn: () => Promise<boolean>,times: number,timeout: number): 
             r.error = e instanceof Error ? e : new Error(String(e));  // 确保类型安全
         } finally {
             if (timeout !== undefined && timeout > 0) {
-                await sleep(timeout)
+                await bun.sleep(timeout)
             }
         }
     }

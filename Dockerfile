@@ -1,18 +1,9 @@
-# 推荐使用方案 1（环境变量）
 FROM node:24-alpine
 
-# 安装 curl 和其他必要工具
-
-# 安装 Bun
 RUN npm install -g bun --force
 ENV PATH="/root/.bun/bin:$PATH"
 
-# 安装 Yarn
-RUN npm install -g yarn --force
-
-# 设置镜像源
 RUN npm config set registry https://registry.npmmirror.com
-RUN yarn config set registry https://registry.npmmirror.com
 
 # Bun 镜像源设置（正确的环境变量）
 ENV BUN_INSTALL_REGISTRY=https://registry.npmmirror.com

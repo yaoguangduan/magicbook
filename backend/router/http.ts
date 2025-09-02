@@ -32,7 +32,7 @@ export const doReq = async (c: Context) => {
         // 解析请求体
         const requestData: HttpRequestBody = await c.req.json();
 
-        console.log(`[HTTP] 请求体:`, requestData);
+
         if (!requestData.method || !requestData.url) {
             return c.json({
                 success: false,
@@ -71,7 +71,7 @@ export const doReq = async (c: Context) => {
         if (requestData.body && !['HEAD'].includes(requestData.method.toUpperCase())) {
             if (typeof requestData.body === 'object' && requestData.body !== null) {
                 // 检查 Content-Type 来判断数据格式
-                const contentType = requestData.headers?.['Content-Type'] || requestData.headers?.['content-type'] || fetchOptions.headers['Content-Type'];
+                const contentType = requestData.headers?.['Content-Type'] || requestData.headers?.['content-type'] || (fetchOptions.headers as any)['Content-Type'];
 
                 if (contentType && contentType.includes('application/x-www-form-urlencoded')) {
                     // Form Data 格式 - 转换为 URLSearchParams
@@ -80,22 +80,17 @@ export const doReq = async (c: Context) => {
                         formData.append(key, String(value));
                     }
                     fetchOptions.body = formData.toString();
-                    console.log(`[HTTP] Form data:`, requestData.body);
+
                 } else {
                     // 其他对象类型，前端已经序列化好了，直接传递
                     fetchOptions.body = requestData.body;
-                    console.log(`[HTTP] Object data:`, requestData.body);
+
                 }
             } else {
                 // 字符串或其他类型，直接传递
                 fetchOptions.body = requestData.body;
-                console.log(`[HTTP] Raw data:`, requestData.body);
             }
         }
-
-        console.log(`[HTTP] 发送请求: ${requestData.method} ${requestData.url}`);
-        console.log(`[HTTP] 请求头:`, fetchOptions.headers);
-        console.log(`[HTTP] 请求设置:`, settings);
 
         // 带重试的请求发送
         let response: Response;
@@ -104,7 +99,7 @@ export const doReq = async (c: Context) => {
         for (let attempt = 0; attempt <= settings.retries; attempt++) {
             try {
                 if (attempt > 0) {
-                    console.log(`[HTTP] 重试第 ${attempt} 次...`);
+
                 }
 
                 response = await fetch(requestData.url, fetchOptions);
@@ -165,7 +160,7 @@ export const doReq = async (c: Context) => {
             contentType: contentType
         };
 
-        console.log(`[HTTP] 响应完成: ${response.status} ${response.statusText} (${responseTime}ms)`);
+
 
         // 返回成功响应
         if (isBinary) {

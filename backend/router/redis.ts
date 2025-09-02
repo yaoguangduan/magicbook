@@ -1,8 +1,9 @@
 import {Context} from "hono";
-import {redis} from "../common/database";
+import {getRedis} from "../common/database";
 
 // 定义操作函数
 export const redisOp = async (c: Context) => {
+    const redis = await getRedis();
     const data = await c.req.json<string[]>();
     try {
         let ret = await redis.send(data[0], data.slice(1));

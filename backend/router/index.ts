@@ -5,7 +5,7 @@ import {login} from "./login";
 import {redisOp} from "./redis";
 import {doReq} from "./http";
 import {API_HEALTH_CHECK, MODE_MASTER, MODE_WORKER} from "../common/constants";
-import logger from "../common/logger";
+import logger from "../log/logger";
 
 // Master专用路由
 const initMasterRoutes = (app: Hono) => {
@@ -41,7 +41,7 @@ const initSharedRoutes = (app: Hono) => {
 
 // 根据模式初始化路由
 export const initRouter = async (app: Hono) => {
-    const mode = process.env.mode || MODE_MASTER
+    const mode = config.mode || MODE_MASTER
 
     // 所有模式都需要共享路由
     initSharedRoutes(app)
@@ -57,7 +57,7 @@ export const initRouter = async (app: Hono) => {
         // Worker只需要注册Worker路由
         initWorkerRoutes(app)
     } else {
-        logger.error(`Unknown mode: ${mode}`)
+        logger.error('Unknown mode:', mode)
         throw new Error(`Unknown mode: ${mode}`)
     }
 }

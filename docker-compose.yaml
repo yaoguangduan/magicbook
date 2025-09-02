@@ -44,9 +44,10 @@ services:
     command: >
       sh -c "
         echo 'Environment: $${ENV:-dev}' &&
-        rm -rf yarn.lock node_modules &&
+        rm -rf node_modules bun.lock &&
+        bun pm cache clear &&
         bun pm cache rm &&
-        yarn install --verbose &&
+        bun install &&
         if [ \"$${ENV:-dev}\" = \"prod\" ]; then
           echo 'Starting prod mode...' &&
           bun run build &&

@@ -1,7 +1,7 @@
 import { UP_DOWN_DIR } from './dir';
 import * as fs from 'fs/promises';
 import path from 'path';
-import logger from './logger';
+import logger from '../log/logger';
 
 // 文件清理配置
 const CLEANUP_INTERVAL = 30 * 60 * 1000; // 30分钟检查一次
@@ -58,7 +58,7 @@ const cleanup = async () => {
                 if (fileAge > FILE_MAX_AGE) {
                     await fs.unlink(filePath);
                     deletedCount++;
-                    logger.info(`🗑️ 删除过期文件: ${file}`);
+                    logger.info('🗑️ 删除过期文件:', file);
                 }
             } catch (error) {
                 // 忽略无法访问的文件
@@ -66,7 +66,7 @@ const cleanup = async () => {
         }
         
         if (deletedCount > 0) {
-            logger.info(`✅ 清理完成: 删除了 ${deletedCount} 个文件`);
+            logger.info('✅ 清理完成: 删除了', deletedCount, '个文件');
         }
     } catch (error) {
         logger.error('文件清理服务出错:', error);

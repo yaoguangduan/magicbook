@@ -114,13 +114,10 @@ const router = createRouter({
     routes
 })
 router.beforeEach(async (to, from, next) => {
-    console.log('路由守卫 - 目标路径:', to.path)
     appState.route = to.path
 
     // 检查路由是否需要认证 - 只有明确设置为true的才需要认证
     const requiresAuth = to.matched.some(record => record.meta.requiresAuth === true)
-
-    console.log('是否需要认证:', requiresAuth)
 
     // 检查token状态
     const token = localStorage.getItem('token')
@@ -134,7 +131,6 @@ router.beforeEach(async (to, from, next) => {
                 // 同步用户名到状态中
                 if (userInfo.username && userInfo.username !== appState.username) {
                     appState.username = userInfo.username
-                    console.log('🔄 路由守卫同步用户名:', userInfo.username)
                 }
             } else {
                 // Token无效，清除
@@ -142,7 +138,6 @@ router.beforeEach(async (to, from, next) => {
                 appState.username = ''
             }
         } catch (error) {
-            console.error('Token 验证失败:', error)
             clearAuth()
             appState.username = ''
         }
@@ -150,7 +145,6 @@ router.beforeEach(async (to, from, next) => {
 
     // 如果需要认证但未登录，跳转到登录页
     if (requiresAuth && !isLoggedIn) {
-        console.log('需要认证但未登录，跳转到登录页')
         // 保存当前要访问的路由，登录成功后跳转回来
         setTargetRoute(to.fullPath)
         next('/login')
@@ -159,7 +153,6 @@ router.beforeEach(async (to, from, next) => {
 
     // 如果已登录但访问登录页，重定向到首页
     if (isLoggedIn && to.path === '/login') {
-        console.log('已登录用户访问登录页，重定向到首页')
         // 清除可能保存的目标路由
         clearTargetRoute()
         next('/dashboard')

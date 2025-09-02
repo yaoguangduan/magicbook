@@ -4,8 +4,8 @@
  */
 
 import {Hono} from 'hono'
-import {initEnv, initRequestIdAndLogger} from '../init'
-import logger from '../common/logger'
+import {initEnv, initRequestIdAndLogger} from '../router/init'
+import logger from '../log/logger'
 
 // 初始化环境
 initEnv()

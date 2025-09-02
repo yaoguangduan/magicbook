@@ -7,7 +7,7 @@ import {crypto, env, fs, http, logger, perf, proc, runtime} from '../utils/runti
 
 // 1. 基本运行时检测
 export function detectRuntime() {
-    logger.info(`Running on ${runtime.name} ${runtime.version}`)
+    logger.info('Running on', runtime.name, runtime.version)
 
     if (runtime.isBun) {
         logger.info('Using Bun optimizations')
@@ -23,8 +23,8 @@ export function handleEnvironment() {
     const dbUrl = env.get('DATABASE_URL')
     const isDev = env.get('NODE_ENV') === 'development'
 
-    logger.info(`Server will run on port ${port}`)
-    logger.info(`Development mode: ${isDev}`)
+    logger.info('Server will run on port', port)
+    logger.info('Development mode:', isDev)
 
     // 设置环境变量
     env.set('APP_INITIALIZED', 'true')
@@ -73,8 +73,8 @@ export async function httpOperations() {
 
         if (response.ok) {
             const data = await response.json()
-            logger.info(`GitHub API request completed in ${(endTime - startTime).toFixed(2)}ms`)
-            logger.info(`Repository: ${data.full_name}, Stars: ${data.stargazers_count}`)
+            logger.info('GitHub API request completed in', (endTime - startTime).toFixed(2) + 'ms')
+            logger.info('Repository:', data.full_name, 'Stars:', data.stargazers_count)
         }
     } catch (error) {
         logger.error('HTTP request failed:', error)
@@ -86,12 +86,12 @@ export async function cryptoOperations() {
     try {
         // 生成随机字节
         const randomBytes = await crypto.randomBytes(16)
-        logger.info(`Random bytes generated: ${Array.from(randomBytes).map(b => b.toString(16).padStart(2, '0')).join('')}`)
+        logger.info('Random bytes generated:', Array.from(randomBytes).map(b => b.toString(16).padStart(2, '0')).join(''))
 
         // 计算哈希
         const text = 'Hello, MagicBook!'
         const hash = await crypto.hash('sha256', text)
-        logger.info(`SHA256 hash of "${text}": ${hash}`)
+        logger.info('SHA256 hash of "' + text + '":', hash)
     } catch (error) {
         logger.error('Crypto operation failed:', error)
     }
@@ -108,21 +108,21 @@ export function performanceMonitoring() {
     const endTime = perf.now()
     const memory = perf.memory()
 
-    logger.info(`Calculation completed in ${(endTime - startTime).toFixed(2)}ms`)
-    logger.info(`Result: ${sum}`)
-    logger.info(`Memory usage: ${(memory.used / 1024 / 1024).toFixed(2)}MB`)
+    logger.info('Calculation completed in', (endTime - startTime).toFixed(2) + 'ms')
+    logger.info('Result:', sum)
+    logger.info('Memory usage:', (memory.used / 1024 / 1024).toFixed(2) + 'MB')
 }
 
 // 7. 进程信息兼容性
 export function processInfo() {
-    logger.info(`Process ID: ${proc.pid}`)
-    logger.info(`Working Directory: ${proc.cwd()}`)
-    logger.info(`Command Line Args: ${proc.argv().join(' ')}`)
+    logger.info('Process ID:', proc.pid)
+    logger.info('Working Directory:', proc.cwd())
+    logger.info('Command Line Args:', proc.argv().join(' '))
 
     // 获取所有环境变量
     const allEnv = env.getAll()
     const envCount = Object.keys(allEnv).length
-    logger.info(`Environment variables count: ${envCount}`)
+    logger.info('Environment variables count:', envCount)
 }
 
 // 8. 完整的兼容性示例

@@ -38,7 +38,7 @@ export const pdfMerge = async (c: Context) => {
 }
 export const pdfSetPass = async (c: Context) => {
     const {id, password} = await c.req.json<{ id: string, password: string }>()
-    console.log(path.join(UP_DOWN_DIR, id))
+
 
     const pdf = await PDFDocument.load(await fs.readFile(path.join(UP_DOWN_DIR, id)), {
         ignoreEncryption: true,
@@ -107,7 +107,11 @@ export const pdfEncrypt = async (c: Context) => {
             message: token
         })
     }
-
+    
+    return c.json({
+        type: 'error',
+        message: 'No files to encrypt'
+    })
 }
 export const pdfDecrypt = async (c: Context) => {
     const pdfs = await c.req.json<EncryptOrDecrypt[]>()
@@ -155,6 +159,11 @@ export const pdfDecrypt = async (c: Context) => {
             message: token
         })
     }
+    
+    return c.json({
+        type: 'error',
+        message: 'No files to decrypt'
+    })
 }
 
 interface PdfConvert {
@@ -191,7 +200,7 @@ export const pdfConvert = async (c: Context) => {
                 canvasContext: cac.context,
                 viewport: vp
             } as any).promise
-            console.log(cac)
+
             const buf = cac.canvas.toBuffer(`image/${pdf.format}`, {
                 quality: 1
             })

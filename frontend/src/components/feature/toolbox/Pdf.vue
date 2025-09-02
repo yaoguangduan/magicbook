@@ -149,10 +149,10 @@
                     合并选中
                 </a-button>
                 <a-button :disabled="!hasSelection" type="primary"
-                          @click="()=>encryptPdf(selectedFiles.map(f => pdfFileList.find(ff => ff.id === f)) as PdfFile[])">
+                          @click="()=>encryptPdf((selectedFiles.value || []).map(f => pdfFileList.value.find(ff => ff.key === f)).filter(f => f))">
                     批量加密
                 </a-button>
-                <a-button :disabled="!hasSelection" type="primary" @click="()=>decryptPdf(selectedFiles.map(f => pdfFileList.find(ff => ff.id === f)))">
+                <a-button :disabled="!hasSelection" type="primary" @click="()=>decryptPdf((selectedFiles.value || []).map(f => pdfFileList.value.find(ff => ff.key === f)).filter(f => f))">
                     批量解密
                 </a-button>
                 <a-button :disabled="!hasSelection" type="primary" @click="() => imgCvtModel.show = true">
@@ -187,7 +187,7 @@
                 />
             </a-space>
         </a-modal>
-        <canvas id="canvas" hidden="hidden"></canvas>
+
     </div>
 
 </template>
@@ -199,7 +199,7 @@ import {IconFile, IconLock} from '@arco-design/web-vue/es/icon'
 import {PDFDocument} from '@cantoo/pdf-lib'
 import {showInput} from "../../common/modal";
 import * as pdfjsLib from 'pdfjs-dist';
-import httpClient from "../../../utils/http-client";
+import JSZip from 'jszip';
 
 interface PdfFile {
     key: number,
@@ -210,7 +210,7 @@ interface PdfFile {
     pageTo: number,
     needPass: boolean,
     password: string,
-    id: string,
+    file: File,
     uploadTime: Date,
     url: string,
 }
@@ -222,7 +222,7 @@ const uploadRef = ref()
 const tableRef = ref()
 
 // 计算是否有选中的文件
-const hasSelection = computed(() => selectedFiles.value.length > 0)
+const hasSelection = computed(() => (selectedFiles.value || []).length > 0)
 
 // 添加前验证
 const beforeUpload = (file) => {
@@ -234,9 +234,8 @@ const beforeUpload = (file) => {
     return true
 }
 
-// 自定义添加请求
+// 自定义添加请求 - 纯客户端处理
 const customUpload = async (options) => {
-    console.log(options)
     const {fileItem} = options
     if (!fileItem) {
         Message.error('文件添加失败：文件对象为空')
@@ -245,25 +244,13 @@ const customUpload = async (options) => {
 
     try {
         const arrayBuffer = await fileItem.file.arrayBuffer()
-        const form = new FormData()
-        form.append('file', fileItem.file)
-        const resp = await httpClient('/api/upload', {
-            method: 'POST',
-            body: form
-        })
-        if (!resp.ok) {
-            const data = await resp.json()
-            Message.error('文件上传失败 ' + data.error)
-            return
-        }
-
-        const data = await resp.json()
         const doc = await PDFDocument.load(arrayBuffer, {
             ignoreEncryption: true
         })
+        
         const pdfFile = {
             key: Date.now(),
-            id: data.fileid,
+            file: fileItem.file,
             name: fileItem.name,
             size: fileItem.file.size,
             pages: doc.isEncrypted ? 0 : doc.getPages().length,
@@ -285,7 +272,7 @@ const customUpload = async (options) => {
 
 // 处理表格选择变化
 const handleSelectionChange = () => {
-    console.log(selectedFiles)
+    // 选择变化处理
 }
 
 // 预览PDF
@@ -295,7 +282,7 @@ const previewPdf = (file) => {
 
 // 移动PDF
 const movePdf = (file, isUp) => {
-    const idx = pdfFileList.value.findIndex(f => f.id === file.id)
+    const idx = pdfFileList.value.findIndex(f => f.key === file.key)
     if (idx === -1) return
 
     if (isUp) {
@@ -311,12 +298,12 @@ const movePdf = (file, isUp) => {
 
 // 复制PDF
 const duplicatePdf = (file) => {
-    const idx = pdfFileList.value.findIndex(f => f.id === file.id)
+    const idx = pdfFileList.value.findIndex(f => f.key === file.key)
     if (idx === -1) return
 
     pdfFileList.value.splice(idx + 1, 0, {
         key: Date.now(),
-        id: file.id,
+        file: file.file,
         name: file.name,
         size: file.size,
         pages: file.pages,
@@ -329,7 +316,7 @@ const duplicatePdf = (file) => {
     })
 }
 
-// 设置密码
+// 设置密码 - 客户端验证
 const setPass = async (file) => {
     if (!file) {
         return
@@ -343,37 +330,28 @@ const setPass = async (file) => {
         return
     }
     try {
-        const resp = await httpClient('/api/pdf/setpass', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                id: file.id,
-                password: pass
-            })
+        const arrayBuffer = await file.file.arrayBuffer()
+        const doc = await PDFDocument.load(arrayBuffer, {
+            ignoreEncryption: true,
+            password: pass
         })
-        if (!resp.ok) {
-            const data = await resp.json()
-            Message.error('设置密码失败：' + data.error)
-            return
-        }
-        const respData = await resp.json()
+        
         file.needPass = false
-        file.pages = respData.pages
+        file.pages = doc.getPages().length
         file.pageFrom = 1
         file.pageTo = file.pages
         file.password = pass
         Message.success('设置密码成功')
     } catch (error) {
-        Message.error('设置密码失败：' + error)
+        Message.error('密码错误或设置失败')
     }
 }
-// 加密PDF
+// 加密PDF - 客户端处理
 const encryptPdf = async (files: PdfFile[]) => {
     let loading = null
     try {
-        if (!files) {
+        if (!files || files.length === 0) {
+            Message.warning('请先选择要加密的文件')
             return
         }
         const password = await showInput({
@@ -389,58 +367,130 @@ const encryptPdf = async (files: PdfFile[]) => {
             content: '加密中...',
             duration: 0
         })
-        const resp = await httpClient('/api/pdf/encrypt', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(files.map((f) => ({...f, newPass: password})))
-        })
-        loading.close()
-        if (!resp.ok) {
-            const data = await resp.json()
-            Message.error('加密失败：' + data.error)
-            return
-        }
-        const data = await resp.json()
 
-        if (data.type === 'success') {
-            // 创建隐藏的a标签进行下载，不离开当前页面
-            const a = document.createElement('a')
-            a.href = `/api/download/token?token=${data.message}`
-            a.style.display = 'none'
-            document.body.appendChild(a)
-            a.click()
-            document.body.removeChild(a)
+        if (files.length === 1) {
+            // 单个文件
+            const file = files[0]
+            const arrayBuffer = await file.file.arrayBuffer()
+            const pdf = await PDFDocument.load(arrayBuffer, {
+                ignoreEncryption: true,
+                password: file.password
+            })
+            
+            const newPdf = await PDFDocument.create()
+            const pageIndices = getPageIndices(file.pageFrom, file.pageTo, pdf.getPageCount())
+            const copiedPages = await newPdf.copyPages(pdf, pageIndices)
+            
+            copiedPages.forEach(page => newPdf.addPage(page))
+            
+            newPdf.encrypt({
+                userPassword: password,
+                ownerPassword: password,
+                permissions: {
+                    printing: false,
+                    copying: false,
+                    modifying: false,
+                    fillingForms: false,
+                    annotating: false,
+                    contentAccessibility: false,
+                }
+            })
+            
+            const encryptedBytes = await newPdf.save()
+            downloadFile(encryptedBytes, `${file.name.replace('.pdf', '')}_encrypted.pdf`, 'application/pdf')
         } else {
-            Message.error('加密失败：' + data.error)
+            // 多个文件打包
+            const zip = new JSZip()
+            const fileNameCounts = new Map() // 用于跟踪文件名重复次数
+            
+            for (const file of files) {
+                const arrayBuffer = await file.file.arrayBuffer()
+                const pdf = await PDFDocument.load(arrayBuffer, {
+                    ignoreEncryption: true,
+                    password: file.password
+                })
+                
+                const newPdf = await PDFDocument.create()
+                const pageIndices = getPageIndices(file.pageFrom, file.pageTo, pdf.getPageCount())
+                const copiedPages = await newPdf.copyPages(pdf, pageIndices)
+                
+                copiedPages.forEach(page => newPdf.addPage(page))
+                
+                newPdf.encrypt({
+                    userPassword: password,
+                    ownerPassword: password,
+                    permissions: {
+                        printing: false,
+                        copying: false,
+                        modifying: false,
+                        fillingForms: false,
+                        annotating: false,
+                        contentAccessibility: false,
+                    }
+                })
+                
+                const encryptedBytes = await newPdf.save()
+                
+                // 生成唯一文件名
+                const baseName = file.name.replace('.pdf', '')
+                const count = fileNameCounts.get(baseName) || 0
+                fileNameCounts.set(baseName, count + 1)
+                
+                const uniqueName = count === 0 ? 
+                    `${baseName}_encrypted.pdf` : 
+                    `${baseName}_encrypted_${count + 1}.pdf`
+                
+                zip.file(uniqueName, encryptedBytes)
+            }
+            
+            const zipData = await zip.generateAsync({ type: 'uint8array' })
+            downloadFile(zipData, `encrypted_${Date.now()}.zip`, 'application/zip')
         }
+
+        loading.close()
+        Message.success('加密成功')
     } catch (e) {
-        console.log(e)
         loading?.close()
         Message.error(`加密失败:${e}`)
     }
 }
-const pageList = (from: number, to: number, total: number) => {
-    const pages = []
+// 获取页面索引数组
+const getPageIndices = (from: number, to: number, total: number) => {
+    const indices = []
     if (from === to) {
         if (from === 0) {
             for (let i = 0; i < total; i++) {
-                pages.push(i)
+                indices.push(i)
             }
-            return pages
         } else {
-            return [from]
+            indices.push(from - 1)
         }
     } else {
         for (let i = from; i <= to; i++) {
-            pages.push(i - 1)
+            indices.push(i - 1)
         }
-        return pages
     }
+    return indices
 }
 
-// 解密PDF
+// 下载文件
+const downloadFile = (data: Uint8Array, filename: string, type: string) => {
+    const blob = new Blob([data], { type })
+    const url = URL.createObjectURL(blob)
+    
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    a.style.display = 'none'
+    
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    
+    URL.revokeObjectURL(url)
+}
+
+// 解密PDF - 客户端处理
 const decryptPdf = async (files) => {
     let loading = null
     try {
@@ -456,32 +506,62 @@ const decryptPdf = async (files) => {
             content: '解密中...',
             duration: 0
         })
-        const resp = await httpClient('/api/pdf/decrypt', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(files.map((f) => ({...f, password: password})))
-        })
-        loading.close()
-        if (!resp.ok) {
-            const data = await resp.json()
-            Message.error('加密失败：' + data.error)
-            return
-        }
-        const data = await resp.json()
 
-        if (data.type === 'success') {
-            // 创建隐藏的a标签进行下载，不离开当前页面
-            const a = document.createElement('a')
-            a.href = `/api/download/token?token=${data.message}`
-            a.style.display = 'none'
-            document.body.appendChild(a)
-            a.click()
-            document.body.removeChild(a)
+        if (files.length === 1) {
+            // 单个文件
+            const file = files[0]
+            const arrayBuffer = await file.file.arrayBuffer()
+            const pdf = await PDFDocument.load(arrayBuffer, {
+                ignoreEncryption: true,
+                password: password
+            })
+            
+            const newPdf = await PDFDocument.create()
+            const pageIndices = getPageIndices(file.pageFrom, file.pageTo, pdf.getPageCount())
+            const copiedPages = await newPdf.copyPages(pdf, pageIndices)
+            
+            copiedPages.forEach(page => newPdf.addPage(page))
+            
+            const decryptedBytes = await newPdf.save()
+            downloadFile(decryptedBytes, `${file.name.replace('.pdf', '')}_decrypted.pdf`, 'application/pdf')
         } else {
-            Message.error('加密失败：' + data.error)
+            // 多个文件打包
+            const zip = new JSZip()
+            const fileNameCounts = new Map() // 用于跟踪文件名重复次数
+            
+            for (const file of files) {
+                const arrayBuffer = await file.file.arrayBuffer()
+                const pdf = await PDFDocument.load(arrayBuffer, {
+                    ignoreEncryption: true,
+                    password: password
+                })
+                
+                const newPdf = await PDFDocument.create()
+                const pageIndices = getPageIndices(file.pageFrom, file.pageTo, pdf.getPageCount())
+                const copiedPages = await newPdf.copyPages(pdf, pageIndices)
+                
+                copiedPages.forEach(page => newPdf.addPage(page))
+                
+                const decryptedBytes = await newPdf.save()
+                
+                // 生成唯一文件名
+                const baseName = file.name.replace('.pdf', '')
+                const count = fileNameCounts.get(baseName) || 0
+                fileNameCounts.set(baseName, count + 1)
+                
+                const uniqueName = count === 0 ? 
+                    `${baseName}_decrypted.pdf` : 
+                    `${baseName}_decrypted_${count + 1}.pdf`
+                
+                zip.file(uniqueName, decryptedBytes)
+            }
+            
+            const zipData = await zip.generateAsync({ type: 'uint8array' })
+            downloadFile(zipData, `decrypted_${Date.now()}.zip`, 'application/zip')
         }
+
+        loading.close()
+        Message.success('解密成功')
     } catch (e) {
         loading?.close()
         Message.error(`解密失败:${e}`)
@@ -506,18 +586,8 @@ const imgCvtModel = reactive({
     dpi: 300
 })
 
-const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-
-// 配置 StreamSaver
-if (isDev) {
-    // 开发环境：使用当前页面的完整URL
-    const port = window.location.port || '3000' // 使用当前页面的端口或默认3000
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `${window.location.protocol}//${window.location.hostname}:${port}//pdf.worker.js`
-} else {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.js'
-}
-
-// 转换PDF
+pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.js'
+// 转换PDF为图片 - 客户端处理
 const convertPdf = async () => {
     imgCvtModel.show = false
     const loading = Message.loading({
@@ -525,36 +595,62 @@ const convertPdf = async () => {
         duration: 0
     })
     try {
-        const resp = await httpClient('/api/pdf/convert', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(
-                selectedFiles.value.map(id => pdfFileList.value.find(f => f.key === id)).map(ff => ({
-                    ...ff,
-                    dpi: imgCvtModel.dpi,
-                    format: imgCvtModel.imgFormat.toLocaleLowerCase()
-                }))
-            )
-        })
-        loading.close()
-        if (resp.ok) {
-            const data = await resp.json()
-            // 创建隐藏的a标签进行下载，不离开当前页面
-            const a = document.createElement('a')
-            a.href = `/api/download/token?token=${data.message}`
-            a.style.display = 'none'
-            document.body.appendChild(a)
-            a.click()
-            document.body.removeChild(a)
-            Message.success('转换完成')
-        } else {
-            const data = await resp.json()
-            Message.error('转换失败：' + data.message)
+        const filesToConvert = (selectedFiles.value || []).map(id => 
+            pdfFileList.value.find(f => f.key === id)
+        ).filter(f => f)
+        
+        const zip = new JSZip()
+        const folderNameCounts = new Map() // 用于跟踪文件夹名重复次数
+        
+        for (const file of filesToConvert) {
+            const baseName = file.name.replace('.pdf', '')
+            const count = folderNameCounts.get(baseName) || 0
+            folderNameCounts.set(baseName, count + 1)
+            
+            // 生成唯一文件夹名
+            const uniqueFolderName = count === 0 ? baseName : `${baseName}_${count + 1}`
+            const folder = zip.folder(uniqueFolderName)
+            
+            const arrayBuffer = await file.file.arrayBuffer()
+            const pdf = await pdfjsLib.getDocument({
+                data: arrayBuffer,
+                password: file.password
+            }).promise
+            
+            const pageIndices = getPageIndices(file.pageFrom, file.pageTo, pdf.numPages)
+            
+            for (const pageIndex of pageIndices) {
+                const page = await pdf.getPage(pageIndex + 1)
+                const viewport = page.getViewport({ scale: imgCvtModel.dpi / 72 })
+                
+                // 创建 canvas
+                const canvas = document.createElement('canvas')
+                const context = canvas.getContext('2d')
+                canvas.height = viewport.height
+                canvas.width = viewport.width
+                
+                // 渲染页面
+                await page.render({
+                    canvasContext: context,
+                    viewport: viewport
+                }).promise
+                
+                // 转换为图片数据
+                const imageData = await new Promise<Blob>((resolve) => {
+                    canvas.toBlob(resolve, `image/${imgCvtModel.imgFormat.toLowerCase()}`, 1.0)
+                })
+                
+                const imageBytes = await imageData.arrayBuffer()
+                folder.file(`page_${pageIndex + 1}.${imgCvtModel.imgFormat.toLowerCase()}`, imageBytes)
+            }
         }
+        
+        const zipData = await zip.generateAsync({ type: 'uint8array' })
+        downloadFile(zipData, `converted_${Date.now()}.zip`, 'application/zip')
+        
+        loading.close()
+        Message.success('转换完成')
     } catch (e) {
-        console.log(e)
         loading.close()
         Message.error(`转换失败:${e}`)
     }
@@ -567,7 +663,7 @@ const deletePdf = async (file: PdfFile) => {
         if (index > -1) {
             pdfFileList.value.splice(index, 1)
 
-            const selectedIndex = selectedFiles.value.findIndex(f => f === file.key)
+            const selectedIndex = (selectedFiles.value || []).findIndex(f => f === file.key)
             if (selectedIndex > -1) {
                 selectedFiles.value.splice(selectedIndex, 1)
             }
@@ -579,50 +675,39 @@ const deletePdf = async (file: PdfFile) => {
     }
 }
 
+// 合并PDF - 客户端处理
 const batchMerge = async () => {
-    if (selectedFiles.value.length === 0) {
+    if ((selectedFiles.value || []).length === 0) {
         Message.warning('请先选择要合并的文件')
         return
     }
     const loading = Message.loading('合并中...')
 
     try {
-        const resp = await httpClient('/api/pdf/merge', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(selectedFiles.value.map(id => {
-                const file = pdfFileList.value.find(f => f.key === id)
-                if (!file) return null
-                return {
-                    id: file.id,
-                    password: file.password,
-                    pageFrom: file.pageFrom,
-                    pageTo: file.pageTo
-                }
-            }))
-        })
-        if (!resp.ok) {
-            const data = await resp.json()
-            Message.error(data.message)
-            return
+        const filesToMerge = (selectedFiles.value || []).map(id => {
+            return pdfFileList.value.find(f => f.key === id)
+        }).filter(f => f)
+
+        const mergedPdf = await PDFDocument.create()
+        
+        for (const file of filesToMerge) {
+            const arrayBuffer = await file.file.arrayBuffer()
+            const pdf = await PDFDocument.load(arrayBuffer, {
+                ignoreEncryption: true,
+                password: file.password
+            })
+            
+            const pageIndices = getPageIndices(file.pageFrom, file.pageTo, pdf.getPageCount())
+            const copiedPages = await mergedPdf.copyPages(pdf, pageIndices)
+            
+            copiedPages.forEach(page => mergedPdf.addPage(page))
         }
-        const data = await resp.json()
+        
+        const pdfBytes = await mergedPdf.save()
+        downloadFile(pdfBytes, `merged_${Date.now()}.pdf`, 'application/pdf')
+        
         loading.close()
-        if (!data || data.type === 'error') {
-            Message.error(`合并失败:${data?.message}`)
-            return
-        } else {
-            Message.success('合并成功')
-            // 创建隐藏的a标签进行下载，不离开当前页面
-            const a = document.createElement('a')
-            a.href = `/api/download/token?token=${data.message}`
-            a.style.display = 'none'
-            document.body.appendChild(a)
-            a.click()
-            document.body.removeChild(a)
-        }
+        Message.success('合并成功')
     } catch (e) {
         loading.close()
         Message.error(`合并失败:${e}`)
@@ -630,7 +715,7 @@ const batchMerge = async () => {
 }
 
 const batchDelete = async () => {
-    if (selectedFiles.value.length === 0) {
+    if ((selectedFiles.value || []).length === 0) {
         Message.warning('请先选择要删除的文件')
         return
     }
@@ -640,7 +725,7 @@ const batchDelete = async () => {
             Modal.confirm({
                 hideTitle: true,
                 width: 300,
-                content: `确定要删除选中的 ${selectedFiles.value.length} 个文件吗？`,
+                content: `确定要删除选中的 ${(selectedFiles.value || []).length} 个文件吗？`,
                 okText: '确定',
                 cancelText: '取消',
                 onOk: resolve,
@@ -648,7 +733,7 @@ const batchDelete = async () => {
             })
         })
 
-        pdfFileList.value = pdfFileList.value.filter(f => !selectedFiles.value.includes(f.key))
+        pdfFileList.value = pdfFileList.value.filter(f => !(selectedFiles.value || []).includes(f.key))
 
         selectedFiles.value = []
         if (tableRef.value) {

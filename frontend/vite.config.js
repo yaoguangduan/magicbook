@@ -16,7 +16,7 @@ export default defineConfig({
         target: 'esnext',
         chunkSizeWarningLimit: 1024 * 1028 * 2,
         emptyOutDir: true,
-        outDir: '../backend/static',
+        outDir: '../dist',
         rollupOptions: {
             output: {
                 format: 'es',  // 确保输出 ES 模块

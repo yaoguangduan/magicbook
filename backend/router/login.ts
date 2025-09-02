@@ -1,12 +1,12 @@
 import {Context} from "hono";
-import {redis} from "../common/database";
+import {getRedis} from "../common/database";
 import {sign} from "hono/jwt";
 
 export const login = async (c: Context) => {
-
+    const redis = await getRedis()
     const {username, password, remember} = await c.req.json<{ username: string, password: string, remember: boolean }>()
     const user = await redis.hgetall(`user:${username}`)
-    console.log(user)
+
     if (user === null || Object.keys(user).length === 0) {
         return c.json({message: '用户不存在', type: 'error'}, 400)
     }
@@ -16,6 +16,6 @@ export const login = async (c: Context) => {
     const token = await sign({
         username: username,
         exp: Math.floor(Date.now() / 1000) + (remember ? 60 * 60 * 24 * 30 : 60 * 60 * 24),
-    }, process.env.JWT_SECRET)
+    }, config.web.jwtSecret)
     return c.json({message: '登录成功', type: 'success', token: token})
 }
