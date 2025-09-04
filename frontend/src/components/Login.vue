@@ -92,16 +92,14 @@ const loginRules = {
     ],
     password: [
         {required: true, message: '请输入密码'},
-        {minLength: 6, message: '密码长度不能少于6个字符'}
+        {minLength: 3, message: '密码长度不能少于6个字符'}
     ]
 }
 
 // 登录处理
 const handleLogin = async () => {
+    
     try {
-        const valid = await formRef.value.validate()
-        if (!valid) return
-
         loading.value = true
 
         const response = await httpClient('/api/auth/login', {
@@ -165,7 +163,7 @@ const handleRegister = () => {
 }
 
 // 初始化：设置默认用户名
-loginForm.username = 'admin'
+loginForm.username = 'root'
 
 // 如果有记住的用户名，自动填充
 if (localStorage.getItem('remember') === 'true') {

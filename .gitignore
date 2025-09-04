@@ -5,3 +5,4 @@ node_modules
 backend/static
 logs
 backend/logs
+.env

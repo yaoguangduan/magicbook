@@ -25,7 +25,7 @@
                     <a-option
                         v-for="item in httpClientData.save.savedRequests"
                         :key="item.id"
-                        :value="item.id"
+                        :value="item.name"
                     >
                         <div class="saved-request-option">
               <span :class="item.data.method.toLowerCase()" class="method-tag">
@@ -541,6 +541,7 @@ import {httpHeadersData} from '../../../data/http-headers'
 import {appState} from "../../../states"
 import httpClient from '../../../utils/http-client'
 import {detect, detectAndConvert, FORMAT} from '../../../utils/txt_format'
+import KVStoreClient from '../../../utils/kvstore-client'
 
 onActivated(async () => {
     await loadSavedRequests()
@@ -903,7 +904,7 @@ const hasRequestData = computed(() => {
 // 获取当前选中的保存请求数据
 const selectedSavedRequestData = computed(() => {
     if (!httpClientData.ui.selectedSavedRequest) return null
-    return httpClientData.save.savedRequests.find(item => item.id === httpClientData.ui.selectedSavedRequest)
+    return httpClientData.save.savedRequests.find(item => item.name === httpClientData.ui.selectedSavedRequest)
 })
 
 // 获取Header描述
@@ -954,7 +955,7 @@ const showSaveDialog = () => {
     } else {
         // 如果有选中的请求，使用其显示名称
         const selectedRequest = httpClientData.save.savedRequests.find(
-            item => item.id === httpClientData.ui.selectedSavedRequest
+            item => item.name === httpClientData.ui.selectedSavedRequest
         )
         httpClientData.save.form.name = selectedRequest ? displayName(selectedRequest.name) : ''
     }
@@ -1010,26 +1011,23 @@ const saveRequest = async () => {
         }
 
         const fullName = getFullName(httpClientData.save.form.name)
-        const response = await httpClient('/api/redis', {
-            method: 'POST',
-            body: JSON.stringify(['set', fullName, JSON.stringify(saveData)])
+        
+        await KVStoreClient.save('httprequest', fullName, {
+            description: httpClientData.save.form.description,
+            data: requestData,
+            response: responseData
         })
 
-        if (response.ok) {
-            const result = await response.json()
-            console.log('Save response:', result)
-            Message.success(result.message || '请求已保存')
-            httpClientData.ui.saveDialogVisible = false
-            httpClientData.request.name = httpClientData.save.form.name
+        console.log('Save successful')
+        Message.success('请求已保存')
+        httpClientData.ui.saveDialogVisible = false
+        httpClientData.request.name = fullName
 
-            // 更新选中状态
-            httpClientData.ui.selectedSavedRequest = fullName
-
-            await loadSavedRequests()
-        } else {
-            const error = await response.json()
-            throw new Error(error.message || '保存失败')
-        }
+        // 先重新加载数据
+        await loadSavedRequests()
+        
+        // 然后设置选中状态
+        httpClientData.ui.selectedSavedRequest = fullName
     } catch (error) {
         console.error('保存请求失败:', error)
         Message.error('保存失败')
@@ -1085,26 +1083,23 @@ const copyRequest = async () => {
         }
 
         const fullName = getFullName(httpClientData.copy.form.name)
-        const response = await httpClient('/api/redis', {
-            method: 'POST',
-            body: JSON.stringify(['set', fullName, JSON.stringify(saveData)])
+        
+        await KVStoreClient.save('httprequest', fullName, {
+            description: httpClientData.copy.form.description,
+            data: requestData,
+            response: responseData
         })
 
-        if (response.ok) {
-            const result = await response.json()
-            console.log('Copy response:', result)
-            Message.success('请求已复制')
-            httpClientData.ui.copyDialogVisible = false
+        console.log('Copy successful')
+        Message.success('请求已复制')
+        httpClientData.ui.copyDialogVisible = false
 
-            // 更新选中状态为新复制的请求
-            httpClientData.ui.selectedSavedRequest = fullName
-            httpClientData.request.name = httpClientData.copy.form.name
-
-            await loadSavedRequests()
-        } else {
-            const error = await response.json()
-            throw new Error(error.message || '复制失败')
-        }
+        // 先重新加载数据
+        await loadSavedRequests()
+        
+        // 然后设置选中状态为新复制的请求
+        httpClientData.ui.selectedSavedRequest = fullName
+        httpClientData.request.name = fullName
     } catch (error) {
         console.error('复制请求失败:', error)
         Message.error('复制失败')
@@ -1118,54 +1113,24 @@ const loadSavedRequests = async () => {
     httpClientData.ui.loadLoading = true
 
     try {
-        const resp = await httpClient('/api/redis', {
-            method: 'POST',
-            body: JSON.stringify(['keys', `http_data:${appState.username}:*`])
-        })
+        const records = await KVStoreClient.findByType('httprequest')
+        console.log('KVStore response:', records)
 
-        if (resp.ok) {
-            const result = await resp.json()
-            console.log('Keys response:', result)
+        // 处理查询结果
+        const requests = records.map(record => ({
+            id: record.id,
+            name: record.name,
+            description: record.data.description,
+            data: record.data.data,
+            response: record.data.response,
+            createdAt: record.created_at || new Date().toISOString()
+        }))
 
-            // 获取每个key的详细数据
-            const requests = []
-            if (result.data && result.data.length > 0) {
-                for (const key of result.data) {
-                    try {
-                        const detailResp = await httpClient('/api/redis', {
-                            method: 'POST',
-                            body: JSON.stringify(['get', key])
-                        })
-
-                        if (detailResp.ok) {
-                            const detailResult = await detailResp.json()
-                            if (detailResult.data) {
-                                const requestData = JSON.parse(detailResult.data)
-                                requests.push({
-                                    id: key,
-                                    name: key, // 保持完整名称作为ID和name
-                                    description: requestData.description,
-                                    data: requestData.data,
-                                    response: requestData.response,
-                                    createdAt: new Date().toISOString() // 暂时使用当前时间
-                                })
-                            }
-                        }
-                    } catch (error) {
-                        console.error(`获取请求详情失败 ${key}:`, error)
-                    }
-                }
-            }
-
-            httpClientData.save.savedRequests = requests
-            console.log('Saved requests:', httpClientData.save.savedRequests)
-        } else {
-            const error = await resp.json()
-            Message.error('获取数据失败: ' + (error.message || resp.status))
-        }
+        httpClientData.save.savedRequests = requests
+        console.log('Saved requests:', httpClientData.save.savedRequests)
     } catch (error) {
         console.error('获取保存的请求失败:', error)
-        Message.error('网络请求失败: ' + error.message)
+        Message.error('获取数据失败: ' + error.message)
     } finally {
         httpClientData.ui.loadLoading = false
     }
@@ -1178,7 +1143,7 @@ const loadRequest = (item: any) => {
     httpClientData.request.method = data.method
     httpClientData.request.url = data.url
     httpClientData.request.name = item.name
-    httpClientData.ui.selectedSavedRequest = item.id
+    httpClientData.ui.selectedSavedRequest = item.name
 
     // 加载 headers
     httpClientData.request.headers = data.headers.length > 0
@@ -1458,27 +1423,23 @@ const clearCurrentRequest = () => {
     Message.success('已清空当前请求数据')
 }
 
-// 显示名称（去掉前缀）
-const displayName = (fullName: string) => {
-    const prefix = `http_data:${appState.username}:`
-    if (fullName.startsWith(prefix)) {
-        return fullName.substring(prefix.length)
-    }
-    return fullName
+// 显示名称（直接返回，不再处理前缀）
+const displayName = (name: string) => {
+    return name
 }
 
-// 获取完整名称（加上前缀）
-const getFullName = (displayName: string) => {
-    return `http_data:${appState.username}:${displayName}`
+// 获取完整名称（直接返回，不再添加前缀）
+const getFullName = (name: string) => {
+    return name
 }
 
 // 选择保存的请求
-const onSelectSavedRequest = (requestId: string) => {
-    if (!requestId) {
+const onSelectSavedRequest = (requestName: string) => {
+    if (!requestName) {
         return
     }
 
-    const item = httpClientData.save.savedRequests.find(req => req.id === requestId)
+    const item = httpClientData.save.savedRequests.find(req => req.name === requestName)
     if (item) {
         loadRequest(item)
     }
@@ -1489,7 +1450,7 @@ const handleSave = () => {
     // 如果已经选择了保存的用例，直接保存
     if (httpClientData.ui.selectedSavedRequest) {
         const selectedRequest = httpClientData.save.savedRequests.find(
-            item => item.id === httpClientData.ui.selectedSavedRequest
+            item => item.name === httpClientData.ui.selectedSavedRequest
         )
         if (selectedRequest) {
             // 直接保存到已有用例
@@ -1517,7 +1478,7 @@ const handleCopy = () => {
     }
 
     const selectedRequest = httpClientData.save.savedRequests.find(
-        item => item.id === httpClientData.ui.selectedSavedRequest
+        item => item.name === httpClientData.ui.selectedSavedRequest
     )
 
     if (!selectedRequest) {
@@ -1563,23 +1524,15 @@ const handleDelete = async () => {
         if (!confirmed) return
 
         // 删除远程保存的请求
-        const response = await httpClient('/api/redis', {
-            method: 'POST',
-            body: JSON.stringify(['del', selectedRequest.name]) // selectedRequest.name 已经是完整名称
-        })
+        await KVStoreClient.delete('httprequest', selectedRequest.name)
+        
+        Message.success('请求已删除')
 
-        if (response.ok) {
-            Message.success('请求已删除')
-
-            // 从列表中移除
-            httpClientData.save.savedRequests = httpClientData.save.savedRequests.filter(
-                item => item.id !== httpClientData.ui.selectedSavedRequest
-            )
-            clearCurrentRequest()
-        } else {
-            const error = await response.json()
-            Message.error('删除失败: ' + (error.message || '未知错误'))
-        }
+        // 从列表中移除
+        httpClientData.save.savedRequests = httpClientData.save.savedRequests.filter(
+            item => item.name !== httpClientData.ui.selectedSavedRequest
+        )
+        clearCurrentRequest()
     } catch (error) {
         console.error('删除请求失败:', error)
         Message.error('删除失败: ' + error.message)

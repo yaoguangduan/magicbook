@@ -1,23 +1,28 @@
 import {parseArgs} from "util";
-import {AUTH_FREE_APIS, MODE_MASTER, MODE_WORKER} from "../common/constants";
+import {AUTH_FREE_APIS} from "../common/constants";
 import {serveStatic} from "hono/bun";
 import {Context, Hono} from "hono";
 import {jwt} from "hono/jwt";
 import {HTTPException} from "hono/http-exception";
 import {requestId} from "hono/request-id";
-import logger from "../log/logger";
 import {startFileCleaner} from "../common/file-cleaner";
 import path from "path";
 
-export const initStatic = (app: Hono) => {
-    if (config.mode === MODE_MASTER) {
-        // 获取 server.js 所在的目录
-        const serverDir = path.dirname(new URL(import.meta.url).pathname);
-
-        app.use('/*', serveStatic({
-            root: serverDir,
-        }))
+// 扩展Context类型以包含用户信息
+declare module "hono" {
+    interface ContextVariableMap {
+        user: {
+            username: string;
+            user_id: number;
+        };
     }
+}
+
+export const initStatic = (app: Hono) => {
+    app.use('/*', serveStatic({
+        root: './backend/static',
+        rewriteRequestPath: (path) => path.replace(/^\/backend\/static/, '')
+    }))
 }
 
 export const initAuth = (app: Hono) => {
@@ -25,17 +30,28 @@ export const initAuth = (app: Hono) => {
         if (AUTH_FREE_APIS.includes(c.req.path)) {
             return await next()
         }
+        
+        // 使用JWT中间件进行认证，并在认证成功后解析用户信息
         return jwt({
             secret: config.web.jwtSecret,
-        })(c, next)
+        })(c, async () => {
+            const payload = c.get('jwtPayload') as any;
+            if (payload) {
+                c.set('user', {
+                    username: payload.username,
+                    user_id: payload.user_id
+                });
+            }
+            await next()
+        })
     })
 }
 export const initNotFoundAndErrorHand = (app: Hono) => {
     app.notFound((c) => {
-        if (config.mode === MODE_MASTER) {
-            return c.redirect('/')
+        if (c.req.path === '/') {
+            return c.redirect('/index.html')
         }
-        return c.json({message: 'not found', type: 'error'}, 404)
+        return c.redirect('/')
     })
     app.onError((err, c) => {
         if (err instanceof HTTPException) {
@@ -47,7 +63,7 @@ export const initNotFoundAndErrorHand = (app: Hono) => {
 export const initRequestIdAndLogger = (app: Hono) => {
     app.use(async (c: Context, next) => {
         const masterRequestId = c.req.header('x-request-id')
-        if (config.mode === MODE_WORKER && masterRequestId) {
+        if (masterRequestId) {
             c.set('requestId', masterRequestId)
             return await next()
         } else {
@@ -60,15 +76,25 @@ export const initRequestIdAndLogger = (app: Hono) => {
 
         const reqLogger = logger.child({
             requestId: currentRequestId,
-            req: {
-                method: c.req.method,
-                url: c.req.url,
-                path: c.req.path,
-                headers: c.req.header(),
+        })
+        c.set('logger', reqLogger)
+
+        await next()
+        if (c.req.path.indexOf('/api') === -1) {
+            return
+        }
+        logger.info('client request', {
+            requestId: currentRequestId,
+            url: c.req.url,
+            method: c.req.method,
+            query: c.req.queries(),
+            headers: c.req.header(),
+            body:await c.req.text(),
+            resp:{
+                status: c.res.status,
+                statusText: c.res.statusText,
+                headers: c.res.headers,
             }
         })
-
-        c.set('logger', reqLogger)
-        await next()
     })
 }

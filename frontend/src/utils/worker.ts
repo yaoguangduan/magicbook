@@ -44,7 +44,6 @@ export class WorkerManager {
     }
 }
 
-// 便捷函数
 export function createWorker(workerPath: string) {
     return new WorkerManager(workerPath);
 }
