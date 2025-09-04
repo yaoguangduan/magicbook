@@ -98,7 +98,7 @@ const loginRules = {
 
 // 登录处理
 const handleLogin = async () => {
-    
+
     try {
         loading.value = true
 
@@ -134,10 +134,10 @@ const handleLogin = async () => {
             // 跳转回原来的页面，如果没有保存的路由则跳转到首页
             const targetRoute = getTargetRoute() || '/dashboard'
             // 登录成功，跳转回目标路由
-            
+
             // 清除保存的目标路由
             clearTargetRoute()
-            
+
             // 跳转
             router.push(targetRoute)
         } else {

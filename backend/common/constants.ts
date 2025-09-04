@@ -1,4 +1,3 @@
-
 export const API_HEALTH_CHECK = '/api/health'
 export const API_NODE_OFFLINE = '/api/offline'
 

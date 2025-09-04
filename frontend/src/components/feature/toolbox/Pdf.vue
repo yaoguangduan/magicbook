@@ -4,15 +4,15 @@
         <!-- 文件添加区域 -->
         <div class="upload-section">
             <a-upload
-                :tip="null"
                 ref="uploadRef"
                 :before-upload="beforeUpload"
+                :content="null"
                 :custom-request="customUpload"
+                :drag-tip="null"
                 :show-file-list="false"
+                :tip="null"
                 accept=".pdf"
                 class="pdf-upload"
-                :content="null"
-                :drag-tip="null"
                 drag
                 draggable
                 multiple
@@ -108,7 +108,6 @@
                     </a-table-column>
 
 
-
                     <a-table-column :width="340" fixed="right" title="操作">
                         <template #cell="{ record }">
                             <a-space size="mini">
@@ -152,7 +151,8 @@
                           @click="()=>encryptPdf((selectedFiles.value || []).map(f => pdfFileList.value.find(ff => ff.key === f)).filter(f => f))">
                     批量加密
                 </a-button>
-                <a-button :disabled="!hasSelection" type="primary" @click="()=>decryptPdf((selectedFiles.value || []).map(f => pdfFileList.value.find(ff => ff.key === f)).filter(f => f))">
+                <a-button :disabled="!hasSelection" type="primary"
+                          @click="()=>decryptPdf((selectedFiles.value || []).map(f => pdfFileList.value.find(ff => ff.key === f)).filter(f => f))">
                     批量解密
                 </a-button>
                 <a-button :disabled="!hasSelection" type="primary" @click="() => imgCvtModel.show = true">
@@ -247,7 +247,7 @@ const customUpload = async (options) => {
         const doc = await PDFDocument.load(arrayBuffer, {
             ignoreEncryption: true
         })
-        
+
         const pdfFile = {
             key: Date.now(),
             file: fileItem.file,
@@ -335,7 +335,7 @@ const setPass = async (file) => {
             ignoreEncryption: true,
             password: pass
         })
-        
+
         file.needPass = false
         file.pages = doc.getPages().length
         file.pageFrom = 1
@@ -376,13 +376,13 @@ const encryptPdf = async (files: PdfFile[]) => {
                 ignoreEncryption: true,
                 password: file.password
             })
-            
+
             const newPdf = await PDFDocument.create()
             const pageIndices = getPageIndices(file.pageFrom, file.pageTo, pdf.getPageCount())
             const copiedPages = await newPdf.copyPages(pdf, pageIndices)
-            
+
             copiedPages.forEach(page => newPdf.addPage(page))
-            
+
             newPdf.encrypt({
                 userPassword: password,
                 ownerPassword: password,
@@ -395,27 +395,27 @@ const encryptPdf = async (files: PdfFile[]) => {
                     contentAccessibility: false,
                 }
             })
-            
+
             const encryptedBytes = await newPdf.save()
             downloadFile(encryptedBytes, `${file.name.replace('.pdf', '')}_encrypted.pdf`, 'application/pdf')
         } else {
             // 多个文件打包
             const zip = new JSZip()
             const fileNameCounts = new Map() // 用于跟踪文件名重复次数
-            
+
             for (const file of files) {
                 const arrayBuffer = await file.file.arrayBuffer()
                 const pdf = await PDFDocument.load(arrayBuffer, {
                     ignoreEncryption: true,
                     password: file.password
                 })
-                
+
                 const newPdf = await PDFDocument.create()
                 const pageIndices = getPageIndices(file.pageFrom, file.pageTo, pdf.getPageCount())
                 const copiedPages = await newPdf.copyPages(pdf, pageIndices)
-                
+
                 copiedPages.forEach(page => newPdf.addPage(page))
-                
+
                 newPdf.encrypt({
                     userPassword: password,
                     ownerPassword: password,
@@ -428,22 +428,22 @@ const encryptPdf = async (files: PdfFile[]) => {
                         contentAccessibility: false,
                     }
                 })
-                
+
                 const encryptedBytes = await newPdf.save()
-                
+
                 // 生成唯一文件名
                 const baseName = file.name.replace('.pdf', '')
                 const count = fileNameCounts.get(baseName) || 0
                 fileNameCounts.set(baseName, count + 1)
-                
-                const uniqueName = count === 0 ? 
-                    `${baseName}_encrypted.pdf` : 
+
+                const uniqueName = count === 0 ?
+                    `${baseName}_encrypted.pdf` :
                     `${baseName}_encrypted_${count + 1}.pdf`
-                
+
                 zip.file(uniqueName, encryptedBytes)
             }
-            
-            const zipData = await zip.generateAsync({ type: 'uint8array' })
+
+            const zipData = await zip.generateAsync({type: 'uint8array'})
             downloadFile(zipData, `encrypted_${Date.now()}.zip`, 'application/zip')
         }
 
@@ -475,18 +475,18 @@ const getPageIndices = (from: number, to: number, total: number) => {
 
 // 下载文件
 const downloadFile = (data: Uint8Array, filename: string, type: string) => {
-    const blob = new Blob([data], { type })
+    const blob = new Blob([data], {type})
     const url = URL.createObjectURL(blob)
-    
+
     const a = document.createElement('a')
     a.href = url
     a.download = filename
     a.style.display = 'none'
-    
+
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
-    
+
     URL.revokeObjectURL(url)
 }
 
@@ -515,48 +515,48 @@ const decryptPdf = async (files) => {
                 ignoreEncryption: true,
                 password: password
             })
-            
+
             const newPdf = await PDFDocument.create()
             const pageIndices = getPageIndices(file.pageFrom, file.pageTo, pdf.getPageCount())
             const copiedPages = await newPdf.copyPages(pdf, pageIndices)
-            
+
             copiedPages.forEach(page => newPdf.addPage(page))
-            
+
             const decryptedBytes = await newPdf.save()
             downloadFile(decryptedBytes, `${file.name.replace('.pdf', '')}_decrypted.pdf`, 'application/pdf')
         } else {
             // 多个文件打包
             const zip = new JSZip()
             const fileNameCounts = new Map() // 用于跟踪文件名重复次数
-            
+
             for (const file of files) {
                 const arrayBuffer = await file.file.arrayBuffer()
                 const pdf = await PDFDocument.load(arrayBuffer, {
                     ignoreEncryption: true,
                     password: password
                 })
-                
+
                 const newPdf = await PDFDocument.create()
                 const pageIndices = getPageIndices(file.pageFrom, file.pageTo, pdf.getPageCount())
                 const copiedPages = await newPdf.copyPages(pdf, pageIndices)
-                
+
                 copiedPages.forEach(page => newPdf.addPage(page))
-                
+
                 const decryptedBytes = await newPdf.save()
-                
+
                 // 生成唯一文件名
                 const baseName = file.name.replace('.pdf', '')
                 const count = fileNameCounts.get(baseName) || 0
                 fileNameCounts.set(baseName, count + 1)
-                
-                const uniqueName = count === 0 ? 
-                    `${baseName}_decrypted.pdf` : 
+
+                const uniqueName = count === 0 ?
+                    `${baseName}_decrypted.pdf` :
                     `${baseName}_decrypted_${count + 1}.pdf`
-                
+
                 zip.file(uniqueName, decryptedBytes)
             }
-            
-            const zipData = await zip.generateAsync({ type: 'uint8array' })
+
+            const zipData = await zip.generateAsync({type: 'uint8array'})
             downloadFile(zipData, `decrypted_${Date.now()}.zip`, 'application/zip')
         }
 
@@ -595,59 +595,59 @@ const convertPdf = async () => {
         duration: 0
     })
     try {
-        const filesToConvert = (selectedFiles.value || []).map(id => 
+        const filesToConvert = (selectedFiles.value || []).map(id =>
             pdfFileList.value.find(f => f.key === id)
         ).filter(f => f)
-        
+
         const zip = new JSZip()
         const folderNameCounts = new Map() // 用于跟踪文件夹名重复次数
-        
+
         for (const file of filesToConvert) {
             const baseName = file.name.replace('.pdf', '')
             const count = folderNameCounts.get(baseName) || 0
             folderNameCounts.set(baseName, count + 1)
-            
+
             // 生成唯一文件夹名
             const uniqueFolderName = count === 0 ? baseName : `${baseName}_${count + 1}`
             const folder = zip.folder(uniqueFolderName)
-            
+
             const arrayBuffer = await file.file.arrayBuffer()
             const pdf = await pdfjsLib.getDocument({
                 data: arrayBuffer,
                 password: file.password
             }).promise
-            
+
             const pageIndices = getPageIndices(file.pageFrom, file.pageTo, pdf.numPages)
-            
+
             for (const pageIndex of pageIndices) {
                 const page = await pdf.getPage(pageIndex + 1)
-                const viewport = page.getViewport({ scale: imgCvtModel.dpi / 72 })
-                
+                const viewport = page.getViewport({scale: imgCvtModel.dpi / 72})
+
                 // 创建 canvas
                 const canvas = document.createElement('canvas')
                 const context = canvas.getContext('2d')
                 canvas.height = viewport.height
                 canvas.width = viewport.width
-                
+
                 // 渲染页面
                 await page.render({
                     canvasContext: context,
                     viewport: viewport
                 }).promise
-                
+
                 // 转换为图片数据
                 const imageData = await new Promise<Blob>((resolve) => {
                     canvas.toBlob(resolve, `image/${imgCvtModel.imgFormat.toLowerCase()}`, 1.0)
                 })
-                
+
                 const imageBytes = await imageData.arrayBuffer()
                 folder.file(`page_${pageIndex + 1}.${imgCvtModel.imgFormat.toLowerCase()}`, imageBytes)
             }
         }
-        
-        const zipData = await zip.generateAsync({ type: 'uint8array' })
+
+        const zipData = await zip.generateAsync({type: 'uint8array'})
         downloadFile(zipData, `converted_${Date.now()}.zip`, 'application/zip')
-        
+
         loading.close()
         Message.success('转换完成')
     } catch (e) {
@@ -689,23 +689,23 @@ const batchMerge = async () => {
         }).filter(f => f)
 
         const mergedPdf = await PDFDocument.create()
-        
+
         for (const file of filesToMerge) {
             const arrayBuffer = await file.file.arrayBuffer()
             const pdf = await PDFDocument.load(arrayBuffer, {
                 ignoreEncryption: true,
                 password: file.password
             })
-            
+
             const pageIndices = getPageIndices(file.pageFrom, file.pageTo, pdf.getPageCount())
             const copiedPages = await mergedPdf.copyPages(pdf, pageIndices)
-            
+
             copiedPages.forEach(page => mergedPdf.addPage(page))
         }
-        
+
         const pdfBytes = await mergedPdf.save()
         downloadFile(pdfBytes, `merged_${Date.now()}.pdf`, 'application/pdf')
-        
+
         loading.close()
         Message.success('合并成功')
     } catch (e) {

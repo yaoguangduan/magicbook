@@ -1,4 +1,4 @@
-import { getMySQL } from '../mysql';
+import {getMySQL} from '../mysql';
 
 // 辅助函数：过滤Bun SQL返回结果中的元数据
 function filterBunSQLResult<T>(result: any[]): T[] {

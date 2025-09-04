@@ -1,7 +1,7 @@
 // 全局类型声明
 declare global {
     var config: {
-        env:string
+        env: string
         mysql: {
             url: string
         }
@@ -10,9 +10,9 @@ declare global {
         }
     }
     var runtime: {
-        exec:string,
-        main:string
-        port:number
+        exec: string,
+        main: string
+        port: number
     }
 
     var logger: {
@@ -22,7 +22,7 @@ declare global {
         error: (msg: string, ...args: any[]) => void
         child: (meta: any) => any
         close: () => void
-        log: (level:string,message: string, meta?: any) => void
+        log: (level: string, message: string, meta?: any) => void
     }
 }
 

@@ -1,12 +1,9 @@
-import {parseArgs} from "util";
 import {AUTH_FREE_APIS} from "../common/constants";
 import {serveStatic} from "hono/bun";
 import {Context, Hono} from "hono";
 import {jwt} from "hono/jwt";
 import {HTTPException} from "hono/http-exception";
 import {requestId} from "hono/request-id";
-import {startFileCleaner} from "../common/file-cleaner";
-import path from "path";
 
 // 扩展Context类型以包含用户信息
 declare module "hono" {
@@ -30,7 +27,7 @@ export const initAuth = (app: Hono) => {
         if (AUTH_FREE_APIS.includes(c.req.path)) {
             return await next()
         }
-        
+
         // 使用JWT中间件进行认证，并在认证成功后解析用户信息
         return jwt({
             secret: config.web.jwtSecret,
@@ -89,8 +86,8 @@ export const initRequestIdAndLogger = (app: Hono) => {
             method: c.req.method,
             query: c.req.queries(),
             headers: c.req.header(),
-            body:await c.req.text(),
-            resp:{
+            body: await c.req.text(),
+            resp: {
                 status: c.res.status,
                 statusText: c.res.statusText,
                 headers: c.res.headers,

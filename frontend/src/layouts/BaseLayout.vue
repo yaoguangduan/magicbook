@@ -17,11 +17,11 @@
                     v-model="searchText"
                     class="header-search"
                     placeholder="搜索功能..."
-                    @focus="showSearchDialog"
                     size="small"
+                    @focus="showSearchDialog"
                 >
                     <template #prefix>
-                        <icon-search style="color: #c9cdd4;" />
+                        <icon-search style="color: #c9cdd4;"/>
                     </template>
                 </a-input>
 
@@ -34,11 +34,11 @@
 
                 <!-- 设置按钮 -->
                 <a-tooltip content="页面设置">
-                    <a-button type="text" class="header-btn" @click="showSettings">
-                        <icon-settings />
+                    <a-button class="header-btn" type="text" @click="showSettings">
+                        <icon-settings/>
                     </a-button>
                 </a-tooltip>
-                
+
                 <a-dropdown @select="handleUserMenuSelect">
                     <div class="user-dropdown">
                         <a-avatar :size="32" :style="{ backgroundColor: userAvatarColor }">
@@ -68,52 +68,52 @@
                 class="layout-sider"
                 style="transition: width 0.2s"
             >
-                 <a-menu
-                     :collapsed="collapsed"
-                     :default-open-keys="collapsed ? [] : ['通用工具', '生物信息']"
-                     :selected-keys="selectedKeys"
-                     class="menu"
-                     theme="light"
-                     @menu-item-click="handleMenuClick"
-                     @sub-menu-click="(e) => e.stopPropagation()"
-                 >
-                     <a-sub-menu
-                         v-for="(category, categoryKey) in menuCategories"
-                         :key="categoryKey"
-                     >
-                         <template #icon>
-                             <icon-tool v-if="categoryKey === '通用工具'" />
-                             <icon-experiment v-else-if="categoryKey === '生物信息'" />
-                             <icon-apps v-else />
-                         </template>
-                         <template #title>{{ category.title }}</template>
-                         <a-menu-item
-                             v-for="item in category.items"
-                             :key="item.name"
-                         >
-                             <template #icon>
-                                 <icon-file-pdf v-if="item.meta.title === 'PDF处理'" />
-                                 <icon-code v-else-if="item.meta.title === 'Json操作'" />
-                                 <icon-swap v-else-if="item.meta.title === 'Converter'" />
-                                 <icon-link v-else-if="item.meta.title === 'HTTP客户端'" />
-                                 <icon-download v-else-if="item.meta.title === 'TCMSP数据下载'" />
-                                 <icon-tool v-else />
-                             </template>
-                             {{ item.meta.title }}
-                         </a-menu-item>
-                     </a-sub-menu>
-                                      </a-menu>
-                     
-                     <!-- 自定义折叠按钮 -->
-                     <div class="collapse-trigger" @click="toggleCollapse">
-                         <icon-menu-fold v-if="!collapsed" />
-                         <icon-menu-unfold v-if="collapsed" />
-                     </div>
-                     
-                     <!-- 调试信息（开发时使用） -->
-                     <div v-if="false" class="debug-info" style="position: absolute; bottom: 60px; left: 8px; font-size: 10px; color: #999;">
-                         {{ collapsed ? '折叠' : '展开' }}
-                     </div>
+                <a-menu
+                    :collapsed="collapsed"
+                    :default-open-keys="collapsed ? [] : ['通用工具', '生物信息']"
+                    :selected-keys="selectedKeys"
+                    class="menu"
+                    theme="light"
+                    @menu-item-click="handleMenuClick"
+                    @sub-menu-click="(e) => e.stopPropagation()"
+                >
+                    <a-sub-menu
+                        v-for="(category, categoryKey) in menuCategories"
+                        :key="categoryKey"
+                    >
+                        <template #icon>
+                            <icon-tool v-if="categoryKey === '通用工具'"/>
+                            <icon-experiment v-else-if="categoryKey === '生物信息'"/>
+                            <icon-apps v-else/>
+                        </template>
+                        <template #title>{{ category.title }}</template>
+                        <a-menu-item
+                            v-for="item in category.items"
+                            :key="item.name"
+                        >
+                            <template #icon>
+                                <icon-file-pdf v-if="item.meta.title === 'PDF处理'"/>
+                                <icon-code v-else-if="item.meta.title === 'Json操作'"/>
+                                <icon-swap v-else-if="item.meta.title === 'Converter'"/>
+                                <icon-link v-else-if="item.meta.title === 'HTTP客户端'"/>
+                                <icon-download v-else-if="item.meta.title === 'TCMSP数据下载'"/>
+                                <icon-tool v-else/>
+                            </template>
+                            {{ item.meta.title }}
+                        </a-menu-item>
+                    </a-sub-menu>
+                </a-menu>
+
+                <!-- 自定义折叠按钮 -->
+                <div class="collapse-trigger" @click="toggleCollapse">
+                    <icon-menu-fold v-if="!collapsed"/>
+                    <icon-menu-unfold v-if="collapsed"/>
+                </div>
+
+                <!-- 调试信息（开发时使用） -->
+                <div v-if="false" class="debug-info" style="position: absolute; bottom: 60px; left: 8px; font-size: 10px; color: #999;">
+                    {{ collapsed ? '折叠' : '展开' }}
+                </div>
             </a-layout-sider>
 
             <!-- 右侧内容区域 -->
@@ -133,49 +133,49 @@
             v-model:visible="searchVisible"
             @navigate="handleNavigate"
         />
-        
+
         <!-- 页面设置抽屉 -->
         <a-drawer
             v-model:visible="settingsVisible"
-            title="页面配置"
-            placement="right"
-            :width="320"
             :footer="false"
             :mask="true"
             :mask-closable="true"
+            :width="320"
+            placement="right"
+            title="页面配置"
         >
             <div class="settings-content">
                 <div class="setting-section">
                     <h4>内容区域</h4>
-                    
+
                     <div class="setting-item">
                         <span>导航栏</span>
-                        <a-switch v-model="pageSettings.showHeader" />
+                        <a-switch v-model="pageSettings.showHeader"/>
                     </div>
-                    
+
                     <div class="setting-item">
                         <span>菜单栏</span>
-                        <a-switch v-model="pageSettings.showSidebar" />
+                        <a-switch v-model="pageSettings.showSidebar"/>
                     </div>
-                    
+
                     <div class="setting-item">
                         <span>菜单宽度 (px)</span>
-                        <a-input-number 
-                            v-model="pageSettings.sidebarWidth" 
-                            :min="200" 
-                            :max="550" 
+                        <a-input-number
+                            v-model="pageSettings.sidebarWidth"
+                            :max="550"
+                            :min="200"
                             :step="10"
                             style="width: 80px;"
                         />
                     </div>
                 </div>
-                
+
                 <div class="setting-section">
                     <h4>其他设置</h4>
-                    
+
                     <div class="setting-item">
                         <span>自动保存设置</span>
-                        <a-switch v-model="pageSettings.autoSave" />
+                        <a-switch v-model="pageSettings.autoSave"/>
                     </div>
                 </div>
             </div>
@@ -198,6 +198,7 @@ import {Message} from '@arco-design/web-vue'
 import {appState} from '../states'
 import {clearAuth} from '../utils/auth'
 import SearchDialog from '../components/SearchDialog.vue'
+
 const router = useRouter()
 const route = useRoute()
 
@@ -225,7 +226,7 @@ const loadPageSettings = () => {
     if (saved) {
         try {
             const parsed = JSON.parse(saved)
-            pageSettings.value = { ...pageSettings.value, ...parsed }
+            pageSettings.value = {...pageSettings.value, ...parsed}
         } catch (e) {
             console.error('加载页面设置失败:', e)
         }
@@ -279,7 +280,7 @@ watch(() => route.path, (newPath) => {
         collapsed.value = savedCollapsed
         console.log('🔄 路由变化，强制恢复折叠状态:', collapsed.value ? '已折叠' : '已展开')
     }
-}, { immediate: true })
+}, {immediate: true})
 
 // 页面加载时确保状态正确
 onMounted(() => {
@@ -289,13 +290,13 @@ onMounted(() => {
         collapsed.value = savedCollapsed
         console.log('📱 页面加载，恢复折叠状态:', collapsed.value ? '已折叠' : '已展开')
     }
-    
+
     // 如果没有保存过状态，设置默认值
     if (localStorage.getItem(STORAGE_KEY) === null) {
         localStorage.setItem(STORAGE_KEY, 'false')
         console.log('📝 首次使用，设置默认折叠状态: 展开')
     }
-    
+
     // 加载页面设置
     loadPageSettings()
 })
@@ -303,7 +304,7 @@ onMounted(() => {
 // 监听页面设置变化，自动保存
 watch(pageSettings, () => {
     savePageSettings()
-}, { deep: true })
+}, {deep: true})
 
 // 从路由动态生成菜单
 const menuCategories = computed(() => {
@@ -397,7 +398,7 @@ const handleLogoClick = () => {
 }
 
 const handleMenuClick = (key, event) => {
-    console.log('clpd',collapsed.value)
+    console.log('clpd', collapsed.value)
     if (event && event.stopPropagation) {
         event.stopPropagation()
     }
@@ -407,7 +408,7 @@ const handleMenuClick = (key, event) => {
         const route = category.items.find(item => item.name === key)
         if (route) {
             router.push(route.path).then(() => {
-                console.log('clpddd',collapsed.value)
+                console.log('clpddd', collapsed.value)
             })
             return
         }
@@ -417,7 +418,7 @@ const handleMenuClick = (key, event) => {
     const path = routeMap[key]
     if (path) {
         router.push(path).then(() => {
-            console.log('clpddd',collapsed.value)
+            console.log('clpddd', collapsed.value)
         })
     }
 

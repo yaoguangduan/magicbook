@@ -4,15 +4,15 @@ import fs from 'fs';
 
 const LOG_DIR = process.env.LOG_DIR || './logs';
 if (!fs.existsSync(LOG_DIR)) {
-    fs.mkdirSync(LOG_DIR, { recursive: true });
+    fs.mkdirSync(LOG_DIR, {recursive: true});
 }
 
 const customFormat = winston.format.combine(
     winston.format.timestamp({
         format: 'YYYY-MM-DD HH:mm:ss.SSS'
     }),
-    winston.format.errors({ stack: true }),
-    winston.format.printf(({ timestamp, level, message, ...meta }) => {
+    winston.format.errors({stack: true}),
+    winston.format.printf(({timestamp, level, message, ...meta}) => {
         // 重新组织字段顺序，把关键信息放在前面
         const logEntry = {
             timestamp,
@@ -30,7 +30,7 @@ const consoleFormat = winston.format.combine(
     winston.format.timestamp({
         format: 'HH:mm:ss.SSS'
     }),
-    winston.format.printf(({ timestamp, level, message, ...meta }) => {
+    winston.format.printf(({timestamp, level, message, ...meta}) => {
         let metaStr = '';
         if (Object.keys(meta).length > 0) {
             metaStr = ' ' + JSON.stringify(meta, null, 2);
@@ -46,12 +46,12 @@ export const fileTransport =
         maxsize: 50 * 1024 * 1024, // 50MB
         maxFiles: 50, // 保留5个文件
         tailable: true,
-        level:'info'
+        level: 'info'
     })
 export const consoleTransport =
     new winston.transports.Console({
         format: consoleFormat,
-        level:  'info'
+        level: 'info'
     })
 const createTransports = () => {
     return [
@@ -61,7 +61,7 @@ const createTransports = () => {
 }
 
 export const log = winston.createLogger({
-    level:   'info',
+    level: 'info',
     format: customFormat,
     transports: createTransports()
 });

@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { userSchema } from '../database/modules';
+import {userSchema} from '../database/modules';
 
 let mongoConnection: mongoose.Connection | null = null;
 
@@ -7,35 +7,35 @@ async function initMongoDB(mongoUrl: string) {
     if (mongoConnection) {
         return;
     }
-    
+
     try {
         console.log('🔄 正在连接 MongoDB:', mongoUrl);
-        
+
         // 连接 MongoDB
         await mongoose.connect(mongoUrl, {
             maxPoolSize: 10,
             serverSelectionTimeoutMS: 8000,
             socketTimeoutMS: 8000,
         });
-        
+
         mongoConnection = mongoose.connection;
-        
+
         // 监听连接事件
         mongoConnection.on('connected', () => {
             console.log('✅ MongoDB 连接成功');
         });
-        
+
         mongoConnection.on('error', (error) => {
             console.error('❌ MongoDB 连接错误:', error);
         });
-        
+
         mongoConnection.on('disconnected', () => {
             console.log('⚠️ MongoDB 连接断开');
         });
-        
+
         // 初始化默认用户
         await initDefaultUser();
-        
+
     } catch (error) {
         console.error('❌ MongoDB connection failed:', error);
         mongoConnection = null;
@@ -46,8 +46,8 @@ async function initMongoDB(mongoUrl: string) {
 async function initDefaultUser() {
     try {
         const User = mongoose.model('User', userSchema);
-        const existingUser = await User.findOne({ username: 'root' });
-        
+        const existingUser = await User.findOne({username: 'root'});
+
         if (!existingUser) {
             await User.create({
                 username: 'root',
@@ -71,11 +71,11 @@ export const getMongoDB = async (): Promise<mongoose.Connection> => {
             throw new Error(`MongoDB 连接失败: ${error.message}`);
         }
     }
-    
+
     if (!mongoConnection) {
         throw new Error('MongoDB 连接未初始化');
     }
-    
+
     return mongoConnection;
 }
 

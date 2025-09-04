@@ -1,5 +1,4 @@
 import {init} from "./env";
-init()
 import {initAuth, initNotFoundAndErrorHand, initRequestIdAndLogger, initStatic} from "./router/init";
 import {initRouter} from "./router";
 import {Hono} from 'hono';
@@ -7,17 +6,11 @@ import {prettyJSON} from 'hono/pretty-json'
 import {initOfflineRouter} from "./router/offline";
 import {getExternalIP} from "./common/ip";
 import logger from "./log/logger";
-import {getMySQL} from "./database/database";
-const app = new Hono();
+import {getMySQL} from "./database/mysql";
 
-// 初始化MySQL连接
-try {
-    await getMySQL();
-    logger.info('✅ MySQL 连接初始化成功');
-} catch (error) {
-    logger.error('❌ MySQL 连接初始化失败:', error);
-    process.exit(1);
-}
+init()
+
+const app = new Hono();
 
 initRequestIdAndLogger(app)  // 日志中间件提前
 initAuth(app)

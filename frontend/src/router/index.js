@@ -1,5 +1,5 @@
 import {createRouter, createWebHashHistory} from 'vue-router'
-import {appState, setTargetRoute, clearTargetRoute} from "../states.js"
+import {appState, clearTargetRoute, setTargetRoute} from "../states.js"
 import {clearAuth, parseJwtToken} from "../utils/auth.js"
 
 // 布局组件

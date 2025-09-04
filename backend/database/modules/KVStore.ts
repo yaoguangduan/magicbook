@@ -1,4 +1,4 @@
-import { getMySQL } from '../mysql';
+import {getMySQL} from '../mysql';
 
 // 辅助函数：过滤Bun SQL返回结果中的元数据
 function filterBunSQLResult<T>(result: any[]): T[] {
@@ -67,7 +67,7 @@ export const create = async (kvData: CreateKVData): Promise<KVRecord> => {
 // 保存记录（upsert - 存在则更新，不存在则创建）
 export const save = async (kvData: CreateKVData): Promise<KVRecord> => {
     const db = await getMySQL();
-    
+
     // 使用MySQL的INSERT ... ON DUPLICATE KEY UPDATE语法实现原子性upsert
     await db`
         INSERT INTO kv_store (type, name, user_id, json_data) 
@@ -76,7 +76,7 @@ export const save = async (kvData: CreateKVData): Promise<KVRecord> => {
         json_data = VALUES(json_data),
         updated_at = CURRENT_TIMESTAMP
     `;
-    
+
     return findByTypeAndName(kvData.type, kvData.name, kvData.user_id);
 };
 
@@ -102,7 +102,11 @@ export const updateById = async (id: number, updateData: any): Promise<KVRecord 
 export const deleteRecord = async (type: string, name: string, user_id: number): Promise<boolean> => {
     const db = await getMySQL();
     const result = await db`
-        DELETE FROM kv_store WHERE type = ${type} AND name = ${name} AND user_id = ${user_id}
+        DELETE
+        FROM kv_store
+        WHERE type = ${type}
+          AND name = ${name}
+          AND user_id = ${user_id}
     `;
     const deleteResult = result as any;
     return deleteResult.affectedRows > 0;
@@ -112,7 +116,9 @@ export const deleteRecord = async (type: string, name: string, user_id: number):
 export const deleteById = async (id: number): Promise<boolean> => {
     const db = await getMySQL();
     const result = await db`
-        DELETE FROM kv_store WHERE id = ${id}
+        DELETE
+        FROM kv_store
+        WHERE id = ${id}
     `;
     const deleteResult = result as any;
     return deleteResult.affectedRows > 0;
@@ -159,22 +165,30 @@ export const count = async (type?: string, user_id?: number): Promise<number> =>
     let result;
     if (type && user_id) {
         result = await db`
-            SELECT COUNT(*) as count FROM kv_store WHERE type = ${type} AND user_id = ${user_id}
+            SELECT COUNT(*) as count
+            FROM kv_store
+            WHERE type = ${type}
+              AND user_id = ${user_id}
         `;
     } else if (type) {
         result = await db`
-            SELECT COUNT(*) as count FROM kv_store WHERE type = ${type}
+            SELECT COUNT(*) as count
+            FROM kv_store
+            WHERE type = ${type}
         `;
     } else if (user_id) {
         result = await db`
-            SELECT COUNT(*) as count FROM kv_store WHERE user_id = ${user_id}
+            SELECT COUNT(*) as count
+            FROM kv_store
+            WHERE user_id = ${user_id}
         `;
     } else {
         result = await db`
-            SELECT COUNT(*) as count FROM kv_store
+            SELECT COUNT(*) as count
+            FROM kv_store
         `;
     }
-    const rows = filterBunSQLResult<{count: number}>(result);
+    const rows = filterBunSQLResult<{ count: number }>(result);
     return rows[0]?.count || 0;
 };
 
@@ -191,7 +205,7 @@ export const getTypes = async (user_id?: number): Promise<string[]> => {
             SELECT DISTINCT type FROM kv_store ORDER BY type
         `;
     }
-    const rows = filterBunSQLResult<{type: string}>(result);
+    const rows = filterBunSQLResult<{ type: string }>(result);
     return rows.map(row => row.type);
 };
 

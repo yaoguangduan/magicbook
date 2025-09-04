@@ -79,7 +79,7 @@ export const upload = async (c: Context) => {
     } catch {
         await fs.mkdir(uploadDir, {recursive: true});
     }
-    
+
     const originalName = file.name || 'unknown';
     const fileid = getFileId(originalName)
     const filePath = path.join(uploadDir, fileid);

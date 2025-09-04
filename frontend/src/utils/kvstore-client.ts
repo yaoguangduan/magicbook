@@ -1,4 +1,4 @@
-import { httpClient } from './http-client';
+import {httpClient} from './http-client';
 
 // KVStore 记录接口（前端简化版）
 export interface KVRecord {
@@ -91,7 +91,7 @@ export class KVStoreClient {
 
         const result: KVStoreResponse<any> = await response.json();
         if (!result.data) return null;
-        
+
         // 将后端的json_data转换为前端的data
         return {
             id: result.data.id,
@@ -123,7 +123,7 @@ export class KVStoreClient {
         }
 
         const result: KVStoreResponse<any> = await response.json();
-        
+
         // 将后端的json_data转换为前端的data
         return {
             id: result.data.id,
@@ -167,7 +167,7 @@ export class KVStoreClient {
             body: JSON.stringify({
                 operation: 'search',
                 type: type,
-                query: { keyword }
+                query: {keyword}
             })
         });
 
@@ -197,7 +197,7 @@ export class KVStoreClient {
             body: JSON.stringify({
                 operation: 'searchJson',
                 type: type,
-                query: { keyword }
+                query: {keyword}
             })
         });
 

@@ -4,8 +4,9 @@ export interface RetryResult {
     success: boolean;
     error?: Error | null;  // 修复：应该是小写error
 }
-const retry = async (fn: () => Promise<boolean>,times: number,timeout: number): Promise<RetryResult> => {
-    let r:RetryResult = {success: false}
+
+const retry = async (fn: () => Promise<boolean>, times: number, timeout: number): Promise<RetryResult> => {
+    let r: RetryResult = {success: false}
     while (times > 0) {
         try {
             const res = await fn()

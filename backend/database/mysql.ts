@@ -1,4 +1,4 @@
-import { SQL } from "bun";
+import {SQL} from "bun";
 
 let bunSQL: SQL | null = null;
 
@@ -7,11 +7,11 @@ async function initBunSQL() {
     if (bunSQL) {
         return bunSQL;
     }
-    
+
     try {
         const serverUrl = config.mysql.url.replace(/\/magicbook$/, '/mysql');
         const serverSQL = new SQL(serverUrl);
-        
+
         await serverSQL`CREATE DATABASE IF NOT EXISTS magicbook CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`;
 
         bunSQL = new SQL(config.mysql.url);
@@ -30,7 +30,7 @@ async function initTables() {
     if (!bunSQL) {
         throw new Error('MySQL连接未初始化');
     }
-    
+
     try {
         // 创建用户表
         await bunSQL`
@@ -46,12 +46,13 @@ async function initTables() {
 
         // 创建通用的KV存储表
         await bunSQL`
-            CREATE TABLE IF NOT EXISTS kv_store (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                type VARCHAR(50) NOT NULL,
-                name VARCHAR(255) NOT NULL,
-                user_id INT NOT NULL,
-                json_data JSON NOT NULL,
+            CREATE TABLE IF NOT EXISTS kv_store
+            (
+                id         INT AUTO_INCREMENT PRIMARY KEY,
+                type       VARCHAR(50)  NOT NULL,
+                name       VARCHAR(255) NOT NULL,
+                user_id    INT          NOT NULL,
+                json_data  JSON         NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 UNIQUE KEY unique_type_name_user (type, name, user_id),
@@ -59,12 +60,14 @@ async function initTables() {
                 INDEX idx_name (name),
                 INDEX idx_user_id (user_id),
                 INDEX idx_type_user (type, user_id),
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+            ) ENGINE = InnoDB
+              DEFAULT CHARSET = utf8mb4
+              COLLATE = utf8mb4_unicode_ci
         `;
-        
+
         await initDefaultUser();
-        
+
     } catch (error) {
         logger.error('❌ 初始化数据库表失败:', error);
         throw error;
@@ -76,12 +79,12 @@ async function initDefaultUser() {
     if (!bunSQL) {
         throw new Error('MySQL连接未初始化');
     }
-    
+
     try {
         const rows = await bunSQL`
             SELECT id FROM users WHERE username = ${'root'}
         `;
-        
+
         if (!rows || rows.length === 0) {
             await bunSQL`
                 INSERT INTO users (username, password) VALUES (${'root'}, ${'root'})
@@ -104,11 +107,11 @@ export const getMySQL = async (): Promise<SQL> => {
             throw new Error(`MySQL 连接失败: ${error.message}`);
         }
     }
-    
+
     if (!bunSQL) {
         throw new Error('MySQL 连接未初始化');
     }
-    
+
     return bunSQL;
 }
 

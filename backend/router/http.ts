@@ -161,7 +161,6 @@ export const doReq = async (c: Context) => {
         };
 
 
-
         // 返回成功响应
         if (isBinary) {
             // 对于二进制数据，我们需要以不同的方式处理

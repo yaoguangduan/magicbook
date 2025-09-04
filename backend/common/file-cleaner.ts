@@ -1,4 +1,4 @@
-import { UP_DOWN_DIR } from './dir';
+import {UP_DOWN_DIR} from './dir';
 import * as fs from 'fs/promises';
 import path from 'path';
 import logger from '../log/logger';
@@ -16,7 +16,7 @@ export const startFileCleaner = () => {
     if (isRunning) {
         return; // 已经在运行
     }
-    
+
     isRunning = true;
 
     // 立即执行一次清理
@@ -33,7 +33,7 @@ const scheduleNextCleanup = () => {
         } catch (error) {
             logger.error('定时清理任务出错:', error);
         }
-        
+
         // 清理完成后，再调度下一次
         scheduleNextCleanup();
     }, CLEANUP_INTERVAL);
@@ -47,13 +47,13 @@ const cleanup = async () => {
         const now = Date.now();
         const files = await fs.readdir(UP_DOWN_DIR);
         let deletedCount = 0;
-        
+
         for (const file of files) {
             const filePath = path.join(UP_DOWN_DIR, file);
             try {
                 const stats = await fs.stat(filePath);
                 const fileAge = now - stats.mtime.getTime();
-                
+
                 // 如果文件超过3小时，删除它
                 if (fileAge > FILE_MAX_AGE) {
                     await fs.unlink(filePath);
@@ -64,7 +64,7 @@ const cleanup = async () => {
                 // 忽略无法访问的文件
             }
         }
-        
+
         if (deletedCount > 0) {
             logger.info('✅ 清理完成: 删除了', deletedCount, '个文件');
         }

@@ -538,7 +538,6 @@ import {IconCode, IconCopy, IconDelete, IconDown, IconDownload, IconInfoCircle, 
 import {json} from '@codemirror/lang-json'
 import CodeMirror from 'vue-codemirror6'
 import {httpHeadersData} from '../../../data/http-headers'
-import {appState} from "../../../states"
 import httpClient from '../../../utils/http-client'
 import {detect, detectAndConvert, FORMAT} from '../../../utils/txt_format'
 import KVStoreClient from '../../../utils/kvstore-client'
@@ -1011,7 +1010,7 @@ const saveRequest = async () => {
         }
 
         const fullName = getFullName(httpClientData.save.form.name)
-        
+
         await KVStoreClient.save('httprequest', fullName, {
             description: httpClientData.save.form.description,
             data: requestData,
@@ -1025,7 +1024,7 @@ const saveRequest = async () => {
 
         // 先重新加载数据
         await loadSavedRequests()
-        
+
         // 然后设置选中状态
         httpClientData.ui.selectedSavedRequest = fullName
     } catch (error) {
@@ -1083,7 +1082,7 @@ const copyRequest = async () => {
         }
 
         const fullName = getFullName(httpClientData.copy.form.name)
-        
+
         await KVStoreClient.save('httprequest', fullName, {
             description: httpClientData.copy.form.description,
             data: requestData,
@@ -1096,7 +1095,7 @@ const copyRequest = async () => {
 
         // 先重新加载数据
         await loadSavedRequests()
-        
+
         // 然后设置选中状态为新复制的请求
         httpClientData.ui.selectedSavedRequest = fullName
         httpClientData.request.name = fullName
@@ -1525,7 +1524,7 @@ const handleDelete = async () => {
 
         // 删除远程保存的请求
         await KVStoreClient.delete('httprequest', selectedRequest.name)
-        
+
         Message.success('请求已删除')
 
         // 从列表中移除
